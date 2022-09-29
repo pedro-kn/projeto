@@ -1,7 +1,5 @@
-<link href="./css/timeline.css" rel="stylesheet">
 
-<script type="text/javascript" src="./assets/js/jquery-3.6.0.min.js"></script>
-<script src="./assets/js/jquery-ui.js"></script>
+<script type="text/javascript" src="./assets/js/jquery-3.6.1.min.js"></script>
 
 <nav id="sidebarMenu" class="col-md-3 col-lg-2 d-md-block bg-light sidebar collapse">
 	<div class="position-sticky pt-3">
@@ -12,7 +10,7 @@
 		</h6>
 		<ul class="nav flex-column mb-2">	
 			<li class="nav-item">
-				<a class="nav-link" href="_pedidos.php">
+				<a class="nav-link" href="pedidos.php">
 				    <span data-feather="shopping-bag"></span>
 				    Pedidos
 				</a>
@@ -24,7 +22,7 @@
 				</a>
 			</li>
 			<li class="nav-item">
-				<a class="nav-link" href="_produtos.php">
+				<a class="nav-link" href="produtos.php">
 					<span data-feather="shopping-cart"></span>
 					Produtos
 				</a>
