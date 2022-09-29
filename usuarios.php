@@ -53,17 +53,18 @@ if(isset($_GET["a"])){
 		}
 	}
     /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
-	* Buscar conteúdo:
+	* Inserir conteúdo:
 	* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 	if($_GET["a"] == "inclui_user"){
       
 
         $nome = $_POST["nome"];
-        $email = $_POST["email"];
-        $senha = $_POST["senha"];
-
-        $res = $User->createUser($nome, $email, $senha);
+        $cpf = $_POST["cpf"];
+        $comissao = $_POST["comissao"];
 		
+        //$res = $db->_exec($nome, $cpf, $comissão);
+		$res = $db->_exec("INSERT INTO vendedor (idVendedor,Nome,CPF,Comissão) VALUES ('30',$nome,$cpf,$comissao)");
+
         echo $res;
 	}
 
@@ -74,11 +75,11 @@ if(isset($_GET["a"])){
         
 
         $id = $_POST["id"];
-        $nome = $_POST["nome"];
-        $email = $_POST["email"];
-        $senha = $_POST["senha"];
+        $nome = $_POST["Nome"];
+        $cpf = $_POST["CPF"];
+        $comissão = $_POST["Comissão"];
 
-        $res = $User->updateUser($id, $nome, $email, $senha);
+        $res = $User->updateUser($id, $nome, $cpf, $comissao);
 		
         echo $res;
 	}
@@ -107,8 +108,8 @@ if(isset($_GET["a"])){
         $res = $User->getUser($id);
 		
         if(count($res) > 0){
-            $res[0]['usu_name'] = utf8_encode($res[0]['usu_name']);
-            $res[0]['usu_email'] = utf8_encode($res[0]['usu_email']);
+            $res[0]['Nome'] = utf8_encode($res[0]['Nome']);
+            $res[0]['CPF'] = utf8_encode($res[0]['CPF']);
             $a_retorno["res"] = $res;
             $c_retorno = json_encode($a_retorno["res"]);
             print_r($c_retorno);
@@ -161,9 +162,9 @@ include("dashboard.php");
 			url: '?a=inclui_user',
 			type: 'post',
 			data: { 
-                nome: $("#frm_nome").val(),
-                email: $("#frm_user").val(),
-                senha: $("#frm_senha").val(),
+                nome: $(Nome).val(),
+                cpf: $(CPF).val(),
+                comissao: $(Comissão).val(),
             },
 			beforeSend: function(){
                 $('#mod_formul').html('<div class="spinner-grow m-3 text-primary" role="status"><span class="visually-hidden">Aguarde...</span></div>');
@@ -297,29 +298,32 @@ include("dashboard.php");
 				<form id="frm_general" name="frm_general">
 					<div class="row mb-3">
 						<div class="col">
-							<label for="frm_nome" class="form-label">Nome:</label>
-							<input type="text" style="text-align: left" aria-describedby="frm_nome" class="form-control form-control-lg" name="frm_nome" id="frm_nome" placeholder="">
+							<label for="Nome" class="form-label">Nome:</label>
+							<input type="text" style="text-align: left" aria-describedby="Nome" class="form-control form-control-lg" name="Nome" id="Nome" placeholder="">
 						</div>
 					</div>
 
 					<div class="row mb-3">
 						<div class="col">
-							<label for="frm_user" class="form-label">E-mail:</label>
-							<input type="text" style="text-align: left" aria-describedby="frm_user" class="form-control form-control-lg" name="frm_user" id="frm_user" placeholder="">
+							<label for="CPF" class="form-label">CPF:</label>
+							<input type="number" style="text-align: left" aria-describedby="CPF" class="form-control form-control-lg" name="CPF" id="CPF" placeholder="">
 						</div>
 					</div>
 
-					<div class="row mb-3">
+					<div class="input-group">
 						<div class="col">
-							<label for="frm_senha" class="form-label">Senha:</label>
-							<input type="password" style="text-align: left" aria-describedby="frm_senha" class="form-control form-control-lg" name="frm_senha" id="frm_senha" placeholder="">
+							<label for="Comissão" class="form-label">Comissão:</label>
+							<input type="number" style="text-align: left" aria-describedby="Comissão" class="form-control form-control-lg" name="Comissão" id="Comissão" placeholder="">
+								<div class="input-group-append" class="col">
+    							<span class="input-group-text" id="basic-addon2">%</span>
+								</div>
 						</div>
 					</div>
 				</form>
 			</div>
 			<div class="modal-footer">
 				<button type="button" class="btn btn-secondary" onclick="$('#mod_formul').modal('hide');">Cancelar</button>
-				<button type="button" class="btn btn-primary" id="frm_OK" onclick="incluiUser();"><img id="img_btn_ok" style="width: 15px; display: none; margin-right: 10px">OK</button>
+				<button type="button" class="btn btn-primary" id="OK" onclick="incluiUser();"><img id="img_btn_ok" style="width: 15px; display: none; margin-right: 10px">OK</button>
 			</div>
 		</div>
 	</div>

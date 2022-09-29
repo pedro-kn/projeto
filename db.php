@@ -34,7 +34,7 @@ class Database extends PDO
         $stmt = $this->prepare($query);
         $stmt->execute();
         $stmt->closeCursor();
-
+        
         return true;
     }
 
