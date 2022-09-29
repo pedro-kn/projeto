@@ -9,8 +9,8 @@
 		<title>Projeto :: PEDRO</title>
 
 		<!-- Bootstrap core CSS -->
-		<link href="./assets/css/fa/all.min.css" rel="stylesheet">
-		<link href="./assets/css/bootstrap.min.css" rel="stylesheet">
+		<link href="./assets/fontawesome/css/all.min.css" rel="stylesheet">
+		<link href="./assets/bootstrap/css/bootstrap.min.css" rel="stylesheet">
 
 		<style>
 			.bd-placeholder-img {

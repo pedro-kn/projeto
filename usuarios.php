@@ -1,19 +1,21 @@
 <?php
 
+include ("db.php");
+$db = new Database();
+
 /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
 * Verificação de ações requisitadas via AJAX:
 * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 if(isset($_GET["a"])){
 
-    include("./script/classes/User.php");
+    
 	
     /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
 	* Buscar conteúdo:
 	* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 	if($_GET["a"] == "lista_user"){
-        $User = new User();
-
-        $res = $User->listaUser();
+		
+		$res = $db->select("SELECT * FROM vendedor");
 		
 		if(count($res) > 0){
 			echo '<div class="table-responsive">';
@@ -21,7 +23,8 @@ if(isset($_GET["a"])){
 				echo '<thead>';
 					echo '<tr>';
 						echo '<th style="text-align: left">Nome</th>';
-						echo '<th style="text-align: center">E-mail</th>';
+						echo '<th style="text-align: center">CPF</th>';
+						echo '<th style="text-align: center">Comissão</th>';
                         echo '<th style="text-align: center">Editar</th>';
                         echo '<th style="text-align: center">Deletar</th>';
 					echo '</tr>';
@@ -29,13 +32,14 @@ if(isset($_GET["a"])){
 				echo '<tbody>';
                 foreach($res as $r){
 					echo '<tr>';
-						echo '<td style="text-align: left">'.$r["usu_name"].'</td>';
-						echo '<td style="text-align: center">'.$r["usu_email"].'</td>';
+						echo '<td style="text-align: left">'.$r["Nome"].'</td>';
+						echo '<td style="text-align: center">'.$r["CPF"].'</td>';
+						echo '<td style="text-align: center">'.$r["Comissão"].'</td>';
                         echo '<td style="text-align: center">';
-							echo '<i title="Editar" onclick="get_item(\''.$r["usu_userId"].'\')" class="fas fa-edit" style="cursor: pointer"></i>';
+							echo '<i title="Editar" onclick="get_item(\''.$r["idVendedor"].'\')" class="fas fa-edit" style="cursor: pointer"></i>';
 						echo '</td>';
                         echo '<td style="text-align: center">';
-							echo '<i title="Deletar" onclick="del_item(\''.$r["usu_userId"].'\')" class="fas fa-trash" style="cursor: pointer"></i>';
+							echo '<i title="Deletar" onclick="del_item(\''.$r["idVendedor"].'\')" class="fas fa-trash" style="cursor: pointer"></i>';
 						echo '</td>';
 					echo '</tr>';
 				}
@@ -52,7 +56,7 @@ if(isset($_GET["a"])){
 	* Buscar conteúdo:
 	* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 	if($_GET["a"] == "inclui_user"){
-        $User = new User();
+      
 
         $nome = $_POST["nome"];
         $email = $_POST["email"];
@@ -67,7 +71,7 @@ if(isset($_GET["a"])){
 	* Edita conteúdo:
 	* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 	if($_GET["a"] == "edit_user"){
-        $User = new User();
+        
 
         $id = $_POST["id"];
         $nome = $_POST["nome"];
@@ -83,7 +87,7 @@ if(isset($_GET["a"])){
 	* Deleta conteúdo:
 	* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 	if($_GET["a"] == "del_user"){
-        $User = new User();
+      
 
         $id = $_POST["id"];
 
@@ -96,7 +100,7 @@ if(isset($_GET["a"])){
 	* Busca conteúdo:
 	* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 	if($_GET["a"] == "get_user"){
-        $User = new User();
+      
 
         $id = $_POST["id"];
 
@@ -119,10 +123,8 @@ include("header.php");
 include("dashboard.php");
 
 ?>
-<link href="./css/timeline.css" rel="stylesheet">
 
-<script type="text/javascript" src="./assets/js/jquery-3.6.0.min.js"></script>
-<script src="./assets/js/jquery-ui.js"></script>
+<script type="text/javascript" src="./assets/js/jquery-3.6.1.min.js"></script>
 <script type="text/javascript">
 	
     /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
@@ -183,7 +185,7 @@ include("dashboard.php");
 	});
 
     /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
-	* Editar itens:
+	* Pesquisar itens:
 	* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 	var ajax_div = $.ajax(null);
 	const get_item = (id) => {
