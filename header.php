@@ -11,6 +11,7 @@
 		<!-- Bootstrap core CSS -->
 		<link href="./assets/fontawesome/css/all.min.css" rel="stylesheet">
 		<link href="./assets/bootstrap/css/bootstrap.min.css" rel="stylesheet">
+		<link href="./assets/bootstrap/js/bootstrap.min.js" rel="stylesheet">
 
 		<style>
 			.bd-placeholder-img {
@@ -27,7 +28,7 @@
 				}
 			}
 		</style>
-		<link href="./css/general.css" rel="stylesheet">
+		
 	</head>
 	
 	<body>
