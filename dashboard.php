@@ -16,7 +16,7 @@
 				</a>
 			</li>	
 			<li class="nav-item">
-				<a class="nav-link" href="_clientes.php">
+				<a class="nav-link" href="clientes.php">
 					<span data-feather="users"></span>
 					Clientes
 				</a>
@@ -28,7 +28,7 @@
 				</a>
 			</li>	
             <li class="nav-item">
-                <a class="nav-link" href="_usuarios.php">
+                <a class="nav-link" href="usuarios.php">
 				    <span data-feather="user"></span>
 				    Usuarios
 				</a>

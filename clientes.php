@@ -15,7 +15,7 @@ if(isset($_GET["a"])){
 	* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 	if($_GET["a"] == "lista_user"){
 		
-		$res = $db->select("SELECT * FROM vendedor");
+		$res = $db->select("SELECT * FROM cliente");
 		
 		if(count($res) > 0){
 			echo '<div class="table-responsive">';
@@ -23,8 +23,8 @@ if(isset($_GET["a"])){
 				echo '<thead>';
 					echo '<tr>';
 						echo '<th style="text-align: left">Nome</th>';
+						echo '<th style="text-align: center">Data de Nascimento</th>';
 						echo '<th style="text-align: center">CPF</th>';
-						echo '<th style="text-align: center">Comissão</th>';
                         echo '<th style="text-align: center">Editar</th>';
                         echo '<th style="text-align: center">Deletar</th>';
 					echo '</tr>';
@@ -33,13 +33,13 @@ if(isset($_GET["a"])){
                 foreach($res as $r){
 					echo '<tr>';
 						echo '<td style="text-align: left">'.$r["Nome"].'</td>';
+						echo '<td style="text-align: center">'.$r["Data_Nasc"].'</td>';
 						echo '<td style="text-align: center">'.$r["CPF"].'</td>';
-						echo '<td style="text-align: center">'.$r["Comissão"].'</td>';
                         echo '<td style="text-align: center">';
-							echo '<i title="Editar" onclick="get_item(\''.$r["idVendedor"].'\')" class="fas fa-edit" style="cursor: pointer"></i>';
+							echo '<i title="Editar" onclick="get_item(\''.$r["idCliente"].'\')" class="fas fa-edit" style="cursor: pointer"></i>';
 						echo '</td>';
                         echo '<td style="text-align: center">';
-							echo '<i title="Deletar" onclick="del_item(\''.$r["idVendedor"].'\')" class="fas fa-trash" style="cursor: pointer"></i>';
+							echo '<i title="Deletar" onclick="del_item(\''.$r["idCliente"].'\')" class="fas fa-trash" style="cursor: pointer"></i>';
 						echo '</td>';
 					echo '</tr>';
 				}
@@ -55,17 +55,13 @@ if(isset($_GET["a"])){
     /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
 	* Inserir conteúdo:
 	* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
-	if($_GET["a"] == "inclui_user"){
+	if($_GET["a"] == "inclui_client"){
       
         $nome = $_POST["nome"];
+        $datanasc = $_POST["datanasc"];
         $cpf = $_POST["cpf"];
-        $comissao = $_POST["comissao"];
 		
-		$s = $db->select("SELECT idVendedor FROM vendedor ORDER BY idVendedor DESC LIMIT 1");
-		foreach($s as $s1){
-			$codVendedor=intval($s1["idVendedor"])+1;
-		}
-		$res = $db->_exec("INSERT INTO vendedor (idVendedor,Nome,CPF,Comissão) VALUES ('$codVendedor','$nome','$cpf','$comissao')");
+		$res = $db->_exec("INSERT INTO cliente (idCliente,Nome,Data_Nasc,CPF) VALUES ('','$nome','$datanasc','$cpf')");
 
         echo $res;
 	}
@@ -73,17 +69,18 @@ if(isset($_GET["a"])){
     /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
 	* Edita conteúdo:
 	* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
-	if($_GET["a"] == "edit_user"){
+	if($_GET["a"] == "edit_client"){
         
 
         $id = $_POST["id"];
         $nome = $_POST["nome"];
+        $datanasc = $_POST["datanasc"];
         $cpf = $_POST["cpf"];
-        $comissao = $_POST["comissao"];
+        
 
-        $res = $db->_exec("UPDATE vendedor 
-			SET idVendedor = '{$id}', Nome = '{$nome}', CPF = '{$cpf}', Comissão = '{$comissao}'
-			WHERE idVendedor = '{$id}'");
+        $res = $db->_exec("UPDATE cliente 
+			SET idCliente = '{$id}', Nome = '{$nome}', Data_Nasc = '{$datanasc}', CPF = '{$cpf}'
+			WHERE idCliente = '{$id}'");
 
         echo $res;
 	}
@@ -96,7 +93,7 @@ if(isset($_GET["a"])){
 
         $id = $_POST["id"];
 
-        $res = $db->_exec("DELETE FROM vendedor WHERE idVendedor = '{$id}'");
+        $res = $db->_exec("DELETE FROM cliente WHERE idCliente = '{$id}'");
 		
         echo $res;
 	}
@@ -104,17 +101,17 @@ if(isset($_GET["a"])){
     /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
 	* Busca conteúdo:
 	* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
-	if($_GET["a"] == "get_user"){
+	if($_GET["a"] == "get_client"){
       
 
         $id = $_POST["id"];
 
-        $res = $db->select("SELECT Nome, CPF, Comissão FROM vendedor WHERE idVendedor = '{$id}'");
+        $res = $db->select("SELECT Nome, Data_Nasc, CPF FROM cliente WHERE idCliente = '{$id}'");
 		
         if(count($res) > 0){
             $res[0]['Nome'] = utf8_encode($res[0]['Nome']);
-            $res[0]['CPF'] = utf8_encode($res[0]['CPF']);
-			$res[0]['Comissão'] = utf8_encode($res[0]['Comissão']);
+            $res[0]['Data_Nasc'] = utf8_encode($res[0]['Data_Nasc']);
+			$res[0]['CPF'] = utf8_encode($res[0]['CPF']);
 			
             $a_retorno["res"] = $res;
             $c_retorno = json_encode($a_retorno["res"]);
@@ -160,26 +157,27 @@ include("dashboard.php");
 	* Incluir itens:
 	* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 	var ajax_div = $.ajax(null);
-	const incluiUser = () => {
+	const incluiClient = () => {
         if(ajax_div){ ajax_div.abort(); }
 		ajax_div = $.ajax({
 			cache: false,
 			async: true,
-			url: '?a=inclui_user',
+			url: '?a=inclui_client',
 			type: 'post',
 			data: { 
                 nome: $('#Nome').val(),
-                cpf: $('#CPF').val(),
-                comissao: $('#Comissão').val(),
+                datanasc: $('#datanasc').val(),    
+                cpf: $('#cpf').val(),
+                
             },
 			beforeSend: function(){
 
-				$('#mod_formul').html('<div class="spinner-grow m-3 text-primary" role="status"><span class="visually-hidden">Aguarde...</span></div>');
+				$('#modal_formul').html('<div class="spinner-grow m-3 text-primary" role="status"><span class="visually-hidden">Aguarde...</span></div>');
 			},
 			success: function retorno_ajax(retorno) {
 				if(retorno){
                     $('#mod_formul').modal('hide');
-					location.reload();
+                    location.reload();
                     lista_itens();  
                 }else{
                     alert("ERRO AO CADASTRAR USUÁRIO! " + retorno);
@@ -202,7 +200,7 @@ include("dashboard.php");
 		ajax_div = $.ajax({
 			cache: false,
 			async: true,
-			url: '?a=get_user',
+			url: '?a=get_client',
 			type: 'post',
 			data: { 
                 id: id,
@@ -218,8 +216,8 @@ include("dashboard.php");
 					var obj_ret = JSON.parse(retorno);
 
 					$("#frm_nome_edit").val(obj_ret[0].Nome);
-					$("#frm_cpf_edit").val(obj_ret[0].CPF);
-					$("#frm_comissao_edit").val(obj_ret[0].Comissão);	
+					$("#frm_datanasc_edit").val(obj_ret[0].Data_Nasc);
+					$("#frm_cpf_edit").val(obj_ret[0].CPF);	
 				}
 			}
 		});
@@ -229,18 +227,18 @@ include("dashboard.php");
 	* Editar itens:
 	* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 	var ajax_div = $.ajax(null);
-	const editUser = () => {
+	const editClient = () => {
         if(ajax_div){ ajax_div.abort(); }
 		ajax_div = $.ajax({
 			cache: false,
 			async: true,
-			url: '?a=edit_user',
+			url: '?a=edit_client',
 			type: 'post',
 			data: { 
                 id: $("#frm_id").val(),
                 nome: $("#frm_nome_edit").val(),
+                datanasc: $("#frm_datanasc_edit").val(),
                 cpf: $("#frm_cpf_edit").val(),
-                comissao: $("#frm_comissao_edit").val(),
             },
 			beforeSend: function(){
                 $('#mod_formul_edit').html('<div class="spinner-grow m-3 text-primary" role="status"><span class="visually-hidden">Aguarde...</span></div>');
@@ -262,7 +260,7 @@ include("dashboard.php");
 	* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 	var ajax_div = $.ajax(null);
 	function del_item(id){
-        if( confirm( "Deseja excluir o usuário?")){
+        if( confirm( "Deseja excluir o cliente?")){
             if(ajax_div){ ajax_div.abort(); }
 		        ajax_div = $.ajax({
 		    	cache: false,
@@ -297,7 +295,7 @@ include("dashboard.php");
 						<h2 style="margin: 0"><span class="badge bg-info text-white" style="padding: 8px" id="span_endereco_nome"></span></h2>
 					</div>
 					<div>
-						<h5 id="tit_frm_formul" class="modal-title">Incluir Usuário</h5>
+						<h5 id="tit_frm_formul" class="modal-title">Incluir Cliente</h5>
 					</div>
 				</div>
 				<button type="button" style="cursor: pointer; border: 1px solid #ccc; border-radius: 10px" aria-label="Fechar" onclick="$('#mod_formul').modal('hide');">X</button>
@@ -313,15 +311,15 @@ include("dashboard.php");
 
 					<div class="row mb-3">
 						<div class="col">
-							<label for="CPF" class="form-label">CPF:</label>
-							<input type="number" style="text-align: left" aria-describedby="CPF" class="form-control form-control-lg" name="CPF" id="CPF" placeholder="">
+							<label for="datanasc" class="form-label">Data de Nascimento:</label>
+							<input type="date" style="text-align: left" aria-describedby="datanasc" class="form-control form-control-lg" name="datanasc" id="datanasc" placeholder="">
 						</div>
 					</div>
 
 					<div class="input-group">
 						<div class="col">
-							<label for="Comissão" class="form-label">Comissão:</label>
-							<input type="number" style="text-align: left" aria-describedby="basic-addon2" class="form-control form-control-lg" name="Comissão" id="Comissão" placeholder="">
+							<label for="cpf" class="form-label">CPF:</label>
+							<input type="number" style="text-align: left" aria-describedby="basic-addon2" class="form-control form-control-lg" name="cpf" id="cpf" placeholder="">
 								
 						</div>
 					</div>
@@ -329,7 +327,7 @@ include("dashboard.php");
 			</div>
 			<div class="modal-footer">
 				<button type="button" class="btn btn-secondary" onclick="$('#mod_formul').modal('hide');">Cancelar</button>
-				<button type="button" class="btn btn-primary" id="OK" onclick="incluiUser();"><img id="img_btn_ok" style="width: 15px; display: none; margin-right: 10px">OK</button>
+				<button type="button" class="btn btn-primary" id="OK" onclick="incluiClient();"><img id="img_btn_ok" style="width: 15px; display: none; margin-right: 10px">OK</button>
 			</div>
 		</div>
 	</div>
@@ -362,22 +360,22 @@ include("dashboard.php");
 
 					<div class="row mb-3">
 						<div class="col">
-							<label for="frm_cpf_edit" class="form-label">CPF:</label>
-							<input type="text" style="text-align: left" aria-describedby="frm_cpf_edit" class="form-control form-control-lg" name="frm_cpf_edit" id="frm_cpf_edit" placeholder="">
+							<label for="frm_datanasc_edit" class="form-label">Data de Nascimento:</label>
+							<input type="text" style="text-align: left" aria-describedby="frm_datanasc_edit" class="form-control form-control-lg" name="frm_datanasc_edit" id="frm_datanasc_edit" placeholder="">
 						</div>
 					</div>
 
 					<div class="row mb-3">
 						<div class="col">
-							<label for="frm_comissao_edit" class="form-label">Comissão:</label>
-							<input type="text" style="text-align: left" aria-describedby="frm_comissao_edit" class="form-control form-control-lg" name="frm_comissao_edit" id="frm_comissao_edit" placeholder="">
+							<label for="frm_cpf_edit" class="form-label">CPF:</label>
+							<input type="text" style="text-align: left" aria-describedby="frm_cpf_edit" class="form-control form-control-lg" name="frm_cpf_edit" id="frm_cpf_edit" placeholder="">
 						</div>
 					</div>
 				</form>
 			</div>
 			<div class="modal-footer">
 				<button type="button" class="btn btn-secondary" onclick="$('#mod_formul_edit').modal('hide');">Cancelar</button>
-				<button type="button" class="btn btn-primary" id="frm_OK" onclick="editUser();"><img id="img_btn_ok" style="width: 15px; display: none; margin-right: 10px">OK</button>
+				<button type="button" class="btn btn-primary" id="frm_OK" onclick="editClient();"><img id="img_btn_ok" style="width: 15px; display: none; margin-right: 10px">OK</button>
 			</div>
 		</div>
 	</div>
@@ -401,7 +399,7 @@ include("dashboard.php");
 	<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
 		<div style="display: flex; flex: 1">
 			<div style="flex: 1">
-				<h1 class="h2">Usuários</h1>
+				<h1 class="h2">Clientes</h1>
 			</div>
 		</div>
 	</div>
