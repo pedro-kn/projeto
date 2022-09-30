@@ -57,13 +57,15 @@ if(isset($_GET["a"])){
 	* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 	if($_GET["a"] == "inclui_user"){
       
-
         $nome = $_POST["nome"];
         $cpf = $_POST["cpf"];
         $comissao = $_POST["comissao"];
 		
-        //$res = $db->_exec($nome, $cpf, $comissão);
-		$res = $db->_exec("INSERT INTO vendedor (idVendedor,Nome,CPF,Comissão) VALUES ('30',$nome,$cpf,$comissao)");
+		$s = $db->select("SELECT idVendedor FROM vendedor ORDER BY idVendedor DESC LIMIT 1");
+		foreach($s as $s1){
+			$codVendedor=intval($s1["idVendedor"])+1;
+		}
+		$res = $db->_exec("INSERT INTO vendedor (idVendedor,Nome,CPF,Comissão) VALUES ('$codVendedor','$nome','$cpf','$comissao')");
 
         echo $res;
 	}
@@ -75,12 +77,14 @@ if(isset($_GET["a"])){
         
 
         $id = $_POST["id"];
-        $nome = $_POST["Nome"];
-        $cpf = $_POST["CPF"];
-        $comissão = $_POST["Comissão"];
+        $nome = $_POST["nome"];
+        $cpf = $_POST["cpf"];
+        $comissao = $_POST["comissao"];
 
-        $res = $User->updateUser($id, $nome, $cpf, $comissao);
-		
+        $res = $db->_exec("UPDATE vendedor 
+			SET idVendedor = '{$id}', Nome = '{$nome}', CPF = '{$cpf}', Comissão = '{$comissao}'
+			WHERE idVendedor = '{$id}'");
+
         echo $res;
 	}
 
@@ -92,7 +96,7 @@ if(isset($_GET["a"])){
 
         $id = $_POST["id"];
 
-        $res = $User->deleteUser($id);
+        $res = $db->_exec("DELETE FROM vendedor WHERE idVendedor = '{$id}'");
 		
         echo $res;
 	}
@@ -105,11 +109,13 @@ if(isset($_GET["a"])){
 
         $id = $_POST["id"];
 
-        $res = $User->getUser($id);
+        $res = $db->select("SELECT Nome, CPF, Comissão FROM vendedor WHERE idVendedor = '{$id}'");
 		
         if(count($res) > 0){
             $res[0]['Nome'] = utf8_encode($res[0]['Nome']);
             $res[0]['CPF'] = utf8_encode($res[0]['CPF']);
+			$res[0]['Comissão'] = utf8_encode($res[0]['Comissão']);
+			
             $a_retorno["res"] = $res;
             $c_retorno = json_encode($a_retorno["res"]);
             print_r($c_retorno);
@@ -162,17 +168,16 @@ include("dashboard.php");
 			url: '?a=inclui_user',
 			type: 'post',
 			data: { 
-                nome: $(Nome).val(),
-                cpf: $(CPF).val(),
-                comissao: $(Comissão).val(),
+                nome: $('#Nome').val(),
+                cpf: $('#CPF').val(),
+                comissao: $('#Comissão').val(),
             },
 			beforeSend: function(){
                 $('#mod_formul').html('<div class="spinner-grow m-3 text-primary" role="status"><span class="visually-hidden">Aguarde...</span></div>');
 			},
 			success: function retorno_ajax(retorno) {
-				if(retorno == "OK"){
+				if(retorno){
                     $('#mod_formul').modal('hide');
-					location.reload();
                     lista_itens();  
                 }else{
                     alert("ERRO AO CADASTRAR USUÁRIO! " + retorno);
@@ -204,14 +209,15 @@ include("dashboard.php");
                 $('#mod_formul_edit').modal("show");
 			},
 			success: function retorno_ajax(retorno) {
+				
 				if(retorno != ""){
                     $("#frm_id").val(id);
                     
 					var obj_ret = JSON.parse(retorno);
 
-					$("#frm_nome_edit").val(obj_ret[0].usu_name);
-					$("#frm_user_edit").val(obj_ret[0].usu_email);
-
+					$("#frm_nome_edit").val(obj_ret[0].Nome);
+					$("#frm_cpf_edit").val(obj_ret[0].CPF);
+					$("#frm_comissao_edit").val(obj_ret[0].Comissão);	
 				}
 			}
 		});
@@ -231,14 +237,14 @@ include("dashboard.php");
 			data: { 
                 id: $("#frm_id").val(),
                 nome: $("#frm_nome_edit").val(),
-                email: $("#frm_user_edit").val(),
-                senha: $("#frm_senha_edit").val(),
+                cpf: $("#frm_cpf_edit").val(),
+                comissao: $("#frm_comissao_edit").val(),
             },
 			beforeSend: function(){
                 $('#mod_formul_edit').html('<div class="spinner-grow m-3 text-primary" role="status"><span class="visually-hidden">Aguarde...</span></div>');
 			},
 			success: function retorno_ajax(retorno) {
-				if(retorno == "OK"){
+				if(retorno){
                     $('#mod_formul_edit').modal('hide');
                     location.reload();
                     lista_itens();  
@@ -265,7 +271,7 @@ include("dashboard.php");
                     id: id,
                 },
 		    	success: function retorno_ajax(retorno) {
-                    if(retorno == "OK"){
+                    if(retorno){
 						location.reload();
                     	lista_itens();  
                 	}else{
@@ -356,15 +362,15 @@ include("dashboard.php");
 
 					<div class="row mb-3">
 						<div class="col">
-							<label for="frm_user_edit" class="form-label">E-mail:</label>
-							<input type="text" style="text-align: left" aria-describedby="frm_user_edit" class="form-control form-control-lg" name="frm_user_edit" id="frm_user_edit" placeholder="">
+							<label for="frm_cpf_edit" class="form-label">CPF:</label>
+							<input type="text" style="text-align: left" aria-describedby="frm_cpf_edit" class="form-control form-control-lg" name="frm_cpf_edit" id="frm_cpf_edit" placeholder="">
 						</div>
 					</div>
 
 					<div class="row mb-3">
 						<div class="col">
-							<label for="frm_senha_edit" class="form-label">Senha:</label>
-							<input type="password" style="text-align: left" aria-describedby="frm_senha_edit" class="form-control form-control-lg" name="frm_senha_edit" id="frm_senha_edit" placeholder="">
+							<label for="frm_comissao_edit" class="form-label">Comissão:</label>
+							<input type="text" style="text-align: left" aria-describedby="frm_comissao_edit" class="form-control form-control-lg" name="frm_comissao_edit" id="frm_comissao_edit" placeholder="">
 						</div>
 					</div>
 				</form>
