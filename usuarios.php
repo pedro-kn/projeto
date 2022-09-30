@@ -173,7 +173,8 @@ include("dashboard.php");
                 comissao: $('#Comissão').val(),
             },
 			beforeSend: function(){
-                $('#mod_formul').html('<div class="spinner-grow m-3 text-primary" role="status"><span class="visually-hidden">Aguarde...</span></div>');
+
+				$('#mod_formul').html('<div class="spinner-grow m-3 text-primary" role="status"><span class="visually-hidden">Aguarde...</span></div>');
 			},
 			success: function retorno_ajax(retorno) {
 				if(retorno){
@@ -319,10 +320,8 @@ include("dashboard.php");
 					<div class="input-group">
 						<div class="col">
 							<label for="Comissão" class="form-label">Comissão:</label>
-							<input type="number" style="text-align: left" aria-describedby="Comissão" class="form-control form-control-lg" name="Comissão" id="Comissão" placeholder="">
-								<div class="input-group-append" class="col">
-    							<span class="input-group-text" id="basic-addon2">%</span>
-								</div>
+							<input type="number" style="text-align: left" aria-describedby="basic-addon2" class="form-control form-control-lg" name="Comissão" id="Comissão" placeholder="">
+								
 						</div>
 					</div>
 				</form>
@@ -406,9 +405,14 @@ include("dashboard.php");
 		</div>
 	</div>
 
-	<div class="row">
-		<div class="col">
-			<div class="input-group mb-3">
+	<div class="form-group row">
+		<div class="col-10">
+			<div class="input-group">
+			<input type="text" class="form-control" id="input_pesquisa" placeholder="Pesquisar">
+			</div>
+		</div>
+		<div class="col-2">
+			<div class="input-group">
 				<button type="button" onclick="$('#mod_formul').modal('show');" class="btn btn-primary"><i class="fa fa-plus-circle" style="margin-right: 5px"></i>Incluir</button>
 			</div>
 		</div>
