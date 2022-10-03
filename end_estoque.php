@@ -7,31 +7,31 @@ $db = new Database();
 * Verificação de ações requisitadas via AJAX:
 * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 if(isset($_GET["a"])){
+
+    
 	
     /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
 	* Buscar conteúdo:
 	* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 	if($_GET["a"] == "lista_user"){
 		
-        $pesquisa = $_POST['pesq'];
+		$pesquisa = $_POST['pesq'];
         $where = "";
 
         if($pesquisa != ""){
-            $where .= "WHERE (EAN LIKE '%{$pesquisa}%' OR Desconto LIKE '%{$pesquisa}%' OR Preço LIKE '%{$pesquisa}%' OR descricao LIKE '%{$pesquisa}%' )";
+            $where .= "WHERE (Nome LIKE '%{$pesquisa}%' OR Data_Nasc LIKE '%{$pesquisa}%' OR CPF LIKE '%{$pesquisa}%')";
         }    
     
-		$res = $db->select("SELECT * FROM produtos {$where}");
+		$res = $db->select("SELECT * FROM cliente {$where}");
 		
 		if(count($res) > 0){
-            
-            echo '<div class="table-responsive">';
+			echo '<div class="table-responsive">';
 			echo '<table id="tb_lista" class="table table-striped table-hover table-sm" style="font-size: 10pt">';
 				echo '<thead>';
 					echo '<tr>';
-						echo '<th style="text-align: left">EAN</th>';
-						echo '<th style="text-align: center">Desconto</th>';
-						echo '<th style="text-align: center">Preço</th>';
-                        echo '<th style="text-align: center">Descrição</th>';
+						echo '<th style="text-align: left">Nome</th>';
+						echo '<th style="text-align: center">Data de Nascimento</th>';
+						echo '<th style="text-align: center">CPF</th>';
                         echo '<th style="text-align: center">Editar</th>';
                         echo '<th style="text-align: center">Deletar</th>';
 					echo '</tr>';
@@ -39,15 +39,14 @@ if(isset($_GET["a"])){
 				echo '<tbody>';
                 foreach($res as $r){
 					echo '<tr>';
-						echo '<td style="text-align: left">'.$r["EAN"].'</td>';
-						echo '<td style="text-align: center">'.$r["Desconto"].'</td>';
-						echo '<td style="text-align: center">'.$r["Preço"].'</td>';
-                        echo '<td style="text-align: center">'.$r["descricao"].'</td>';
+						echo '<td style="text-align: left">'.$r["Nome"].'</td>';
+						echo '<td style="text-align: center">'.$r["Data_Nasc"].'</td>';
+						echo '<td style="text-align: center">'.$r["CPF"].'</td>';
                         echo '<td style="text-align: center">';
-							echo '<i title="Editar" onclick="get_item(\''.$r["idProdutos"].'\')" class="fas fa-edit" style="cursor: pointer"></i>';
+							echo '<i title="Editar" onclick="get_item(\''.$r["idCliente"].'\')" class="fas fa-edit" style="cursor: pointer"></i>';
 						echo '</td>';
                         echo '<td style="text-align: center">';
-							echo '<i title="Deletar" onclick="del_item(\''.$r["idProdutos"].'\')" class="fas fa-trash" style="cursor: pointer"></i>';
+							echo '<i title="Deletar" onclick="del_item(\''.$r["idCliente"].'\')" class="fas fa-trash" style="cursor: pointer"></i>';
 						echo '</td>';
 					echo '</tr>';
 				}
@@ -63,18 +62,13 @@ if(isset($_GET["a"])){
     /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
 	* Inserir conteúdo:
 	* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
-	if($_GET["a"] == "inclui_user"){
+	if($_GET["a"] == "inclui_client"){
       
-        $ean = $_POST["ean"];
-        $desconto = $_POST["desconto"];
-        $preco = $_POST["preco"];
-        $descricao = $_POST["descricao"];
+        $nome = $_POST["nome"];
+        $datanasc = $_POST["datanasc"];
+        $cpf = $_POST["cpf"];
 		
-		$s = $db->select("SELECT idProdutos FROM produtos ORDER BY idProdutos DESC LIMIT 1");
-		foreach($s as $s1){
-			$codProduto=intval($s1["idProdutos"])+1;
-		}
-		$res = $db->_exec("INSERT INTO produtos (idProdutos,EAN,Desconto,Preço,descricao) VALUES ('$codProduto','$ean','$desconto','$preco','$descricao')");
+		$res = $db->_exec("INSERT INTO cliente (idCliente,Nome,Data_Nasc,CPF) VALUES ('','$nome','$datanasc','$cpf')");
 
         echo $res;
 	}
@@ -82,18 +76,18 @@ if(isset($_GET["a"])){
     /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
 	* Edita conteúdo:
 	* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
-	if($_GET["a"] == "edit_user"){
+	if($_GET["a"] == "edit_client"){
         
 
         $id = $_POST["id"];
-        $ean = $_POST["ean"];
-        $desconto = $_POST["desconto"];
-        $preco = $_POST["preco"];
-        $descricao = $_POST["descricao"];
+        $nome = $_POST["nome"];
+        $datanasc = $_POST["datanasc"];
+        $cpf = $_POST["cpf"];
+        
 
-        $res = $db->_exec("UPDATE produtos 
-			SET idProdutos = '{$id}', EAN = '{$ean}', Desconto = '{$desconto}', Preço = '{$preco}', descricao = '{$descricao}'
-			WHERE idProdutos = '{$id}'");
+        $res = $db->_exec("UPDATE cliente 
+			SET idCliente = '{$id}', Nome = '{$nome}', Data_Nasc = '{$datanasc}', CPF = '{$cpf}'
+			WHERE idCliente = '{$id}'");
 
         echo $res;
 	}
@@ -106,7 +100,7 @@ if(isset($_GET["a"])){
 
         $id = $_POST["id"];
 
-        $res = $db->_exec("DELETE FROM produtos WHERE idProdutos = '{$id}'");
+        $res = $db->_exec("DELETE FROM cliente WHERE idCliente = '{$id}'");
 		
         echo $res;
 	}
@@ -114,18 +108,17 @@ if(isset($_GET["a"])){
     /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
 	* Busca conteúdo:
 	* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
-	if($_GET["a"] == "get_user"){
+	if($_GET["a"] == "get_client"){
       
 
         $id = $_POST["id"];
 
-        $res = $db->select("SELECT EAN, Desconto, Preço, descricao FROM produtos WHERE idProdutos = '{$id}'");
+        $res = $db->select("SELECT Nome, Data_Nasc, CPF FROM cliente WHERE idCliente = '{$id}'");
 		
         if(count($res) > 0){
-            $res[0]['EAN'] = utf8_encode($res[0]['EAN']);
-            $res[0]['Desconto'] = utf8_encode($res[0]['Desconto']);
-			$res[0]['Preço'] = utf8_encode($res[0]['Preço']);
-            $res[0]['descricao'] = utf8_encode($res[0]['descricao']);
+            $res[0]['Nome'] = utf8_encode($res[0]['Nome']);
+            $res[0]['Data_Nasc'] = utf8_encode($res[0]['Data_Nasc']);
+			$res[0]['CPF'] = utf8_encode($res[0]['CPF']);
 			
             $a_retorno["res"] = $res;
             $c_retorno = json_encode($a_retorno["res"]);
@@ -157,7 +150,7 @@ include("dashboard.php");
 			async: true,
 			url: '?a=lista_user',
 			type: 'post',
-			data: { pesq: $('#input_pesquisa').val()},
+			data: {pesq: $('#input_pesquisa').val() 			},
 			beforeSend: function(){
 				$('#div_conteudo').html('<div class="spinner-grow m-3 text-primary" role="status"><span class="visually-hidden">Aguarde...</span></div>');
 			},
@@ -171,22 +164,22 @@ include("dashboard.php");
 	* Incluir itens:
 	* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 	var ajax_div = $.ajax(null);
-	const incluiUser = () => {
+	const incluiClient = () => {
         if(ajax_div){ ajax_div.abort(); }
 		ajax_div = $.ajax({
 			cache: false,
 			async: true,
-			url: '?a=inclui_user',
+			url: '?a=inclui_client',
 			type: 'post',
 			data: { 
-                ean: $('#ean').val(),
-                desconto: $('#desconto').val(),
-                preco: $('#preco').val(),
-                descricao: $('#descricao').val(),
+                nome: $('#Nome').val(),
+                datanasc: $('#datanasc').val(),    
+                cpf: $('#cpf').val(),
+                
             },
 			beforeSend: function(){
 
-				$('#mod_formul').html('<div class="spinner-grow m-3 text-primary" role="status"><span class="visually-hidden">Aguarde...</span></div>');
+				$('#modal_formul').html('<div class="spinner-grow m-3 text-primary" role="status"><span class="visually-hidden">Aguarde...</span></div>');
 			},
 			success: function retorno_ajax(retorno) {
 				if(retorno){
@@ -214,7 +207,7 @@ include("dashboard.php");
 		ajax_div = $.ajax({
 			cache: false,
 			async: true,
-			url: '?a=get_user',
+			url: '?a=get_client',
 			type: 'post',
 			data: { 
                 id: id,
@@ -223,16 +216,15 @@ include("dashboard.php");
                 $('#mod_formul_edit').modal("show");
 			},
 			success: function retorno_ajax(retorno) {
-				console.log(retorno);
-				if(retorno != ""){
+				
+				if(retorno){
                     $("#frm_id").val(id);
                     
 					var obj_ret = JSON.parse(retorno);
 
-					$("#frm_ean_edit").val(obj_ret[0].EAN);
-					$("#frm_desconto_edit").val(obj_ret[0].Desconto);
-					$("#frm_preco_edit").val(obj_ret[0].Preço);
-                    $("#frm_descricao_edit").val(obj_ret[0].descricao);		
+					$("#frm_nome_edit").val(obj_ret[0].Nome);
+					$("#frm_datanasc_edit").val(obj_ret[0].Data_Nasc);
+					$("#frm_cpf_edit").val(obj_ret[0].CPF);	
 				}
 			}
 		});
@@ -242,19 +234,18 @@ include("dashboard.php");
 	* Editar itens:
 	* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 	var ajax_div = $.ajax(null);
-	const editUser = () => {
+	const editClient = () => {
         if(ajax_div){ ajax_div.abort(); }
 		ajax_div = $.ajax({
 			cache: false,
 			async: true,
-			url: '?a=edit_user',
+			url: '?a=edit_client',
 			type: 'post',
 			data: { 
                 id: $("#frm_id").val(),
-                ean: $("#frm_ean_edit").val(),
-                desconto: $("#frm_desconto_edit").val(),
-                preco: $("#frm_preco_edit").val(),
-                descricao: $("#frm_descricao_edit").val(),
+                nome: $("#frm_nome_edit").val(),
+                datanasc: $("#frm_datanasc_edit").val(),
+                cpf: $("#frm_cpf_edit").val(),
             },
 			beforeSend: function(){
                 $('#mod_formul_edit').html('<div class="spinner-grow m-3 text-primary" role="status"><span class="visually-hidden">Aguarde...</span></div>');
@@ -276,7 +267,7 @@ include("dashboard.php");
 	* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 	var ajax_div = $.ajax(null);
 	function del_item(id){
-        if( confirm( "Deseja excluir o usuário?")){
+        if( confirm( "Deseja excluir o cliente?")){
             if(ajax_div){ ajax_div.abort(); }
 		        ajax_div = $.ajax({
 		    	cache: false,
@@ -311,7 +302,7 @@ include("dashboard.php");
 						<h2 style="margin: 0"><span class="badge bg-info text-white" style="padding: 8px" id="span_endereco_nome"></span></h2>
 					</div>
 					<div>
-						<h5 id="tit_frm_formul" class="modal-title">Incluir Produtos</h5>
+						<h5 id="tit_frm_formul" class="modal-title">Incluir Cliente</h5>
 					</div>
 				</div>
 				<button type="button" style="cursor: pointer; border: 1px solid #ccc; border-radius: 10px" aria-label="Fechar" onclick="$('#mod_formul').modal('hide');">X</button>
@@ -320,29 +311,22 @@ include("dashboard.php");
 				<form id="frm_general" name="frm_general">
 					<div class="row mb-3">
 						<div class="col">
-							<label for="ean" class="form-label">EAN:</label>
-							<input type="number" style="text-align: left" aria-describedby="ean" class="form-control form-control-lg" name="ean" id="ean" placeholder="">
+							<label for="Nome" class="form-label">Nome:</label>
+							<input type="text" style="text-align: left" aria-describedby="Nome" class="form-control form-control-lg" name="Nome" id="Nome" placeholder="">
 						</div>
 					</div>
 
 					<div class="row mb-3">
 						<div class="col">
-							<label for="desconto" class="form-label">Desconto:</label>
-							<input type="number" style="text-align: left" aria-describedby="desconto" class="form-control form-control-lg" name="desconto" id="desconto" placeholder="">
-						</div>
-					</div>
-
-                    <div class="row mb-3">
-						<div class="col">
-							<label for="preco" class="form-label">Preço:</label>
-							<input type="number" style="text-align: left" aria-describedby="preco" class="form-control form-control-lg" name="preco" id="preco" placeholder="">
+							<label for="datanasc" class="form-label">Data de Nascimento:</label>
+							<input type="date" style="text-align: left" aria-describedby="datanasc" class="form-control form-control-lg" name="datanasc" id="datanasc" placeholder="">
 						</div>
 					</div>
 
 					<div class="input-group">
 						<div class="col">
-							<label for="descricao" class="form-label">Descrição:</label>
-							<input type="text" style="text-align: left" aria-describedby="descricao" class="form-control form-control-lg" name="descricao" id="descricao" placeholder="">
+							<label for="cpf" class="form-label">CPF:</label>
+							<input type="number" style="text-align: left" aria-describedby="basic-addon2" class="form-control form-control-lg" name="cpf" id="cpf" placeholder="">
 								
 						</div>
 					</div>
@@ -350,7 +334,7 @@ include("dashboard.php");
 			</div>
 			<div class="modal-footer">
 				<button type="button" class="btn btn-secondary" onclick="$('#mod_formul').modal('hide');">Cancelar</button>
-				<button type="button" class="btn btn-primary" id="OK" onclick="incluiUser();"><img id="img_btn_ok" style="width: 15px; display: none; margin-right: 10px">OK</button>
+				<button type="button" class="btn btn-primary" id="OK" onclick="incluiClient();"><img id="img_btn_ok" style="width: 15px; display: none; margin-right: 10px">OK</button>
 			</div>
 		</div>
 	</div>
@@ -376,36 +360,29 @@ include("dashboard.php");
 					<div class="row mb-3">
 						<div class="col">
                             <input type="text" style="text-align: left" aria-describedby="frm_id" class="form-control form-control-lg" name="frm_id" id="frm_id" hidden>
-							<label for="frm_ean_edit" class="form-label">EAN:</label>
-							<input type="text" style="text-align: left" aria-describedby="frm_ean_edit" class="form-control form-control-lg" name="frm_ean_edit" id="frm_ean_edit" placeholder="">
+							<label for="frm_nome_edit" class="form-label">Nome:</label>
+							<input type="text" style="text-align: left" aria-describedby="frm_nome_edit" class="form-control form-control-lg" name="frm_nome_edit" id="frm_nome_edit" placeholder="">
 						</div>
 					</div>
 
 					<div class="row mb-3">
 						<div class="col">
-							<label for="frm_desconto_edit" class="form-label">Desconto:</label>
-							<input type="text" style="text-align: left" aria-describedby="frm_desconto_edit" class="form-control form-control-lg" name="frm_desconto_edit" id="frm_desconto_edit" placeholder="">
+							<label for="frm_datanasc_edit" class="form-label">Data de Nascimento:</label>
+							<input type="text" style="text-align: left" aria-describedby="frm_datanasc_edit" class="form-control form-control-lg" name="frm_datanasc_edit" id="frm_datanasc_edit" placeholder="">
 						</div>
 					</div>
 
 					<div class="row mb-3">
 						<div class="col">
-							<label for="frm_preco_edit" class="form-label">Preço:</label>
-							<input type="text" style="text-align: left" aria-describedby="frm_preco_edit" class="form-control form-control-lg" name="frm_preco_edit" id="frm_preco_edit" placeholder="">
-						</div>
-					</div>
-
-                    <div class="row mb-3">
-						<div class="col">
-							<label for="frm_descricao_edit" class="form-label">Descrição:</label>
-							<input type="text" style="text-align: left" aria-describedby="frm_descricao_edit" class="form-control form-control-lg" name="frm_descricao_edit" id="frm_descricao_edit" placeholder="">
+							<label for="frm_cpf_edit" class="form-label">CPF:</label>
+							<input type="text" style="text-align: left" aria-describedby="frm_cpf_edit" class="form-control form-control-lg" name="frm_cpf_edit" id="frm_cpf_edit" placeholder="">
 						</div>
 					</div>
 				</form>
 			</div>
 			<div class="modal-footer">
 				<button type="button" class="btn btn-secondary" onclick="$('#mod_formul_edit').modal('hide');">Cancelar</button>
-				<button type="button" class="btn btn-primary" id="frm_OK" onclick="editUser();"><img id="img_btn_ok" style="width: 15px; display: none; margin-right: 10px">OK</button>
+				<button type="button" class="btn btn-primary" id="frm_OK" onclick="editClient();"><img id="img_btn_ok" style="width: 15px; display: none; margin-right: 10px">OK</button>
 			</div>
 		</div>
 	</div>
@@ -429,7 +406,7 @@ include("dashboard.php");
 	<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
 		<div style="display: flex; flex: 1">
 			<div style="flex: 1">
-				<h1 class="h2">Produtos</h1>
+				<h1 class="h2">Endereços de Estoque</h1>
 			</div>
 		</div>
 	</div>

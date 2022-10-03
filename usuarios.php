@@ -8,14 +8,21 @@ $db = new Database();
 * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 if(isset($_GET["a"])){
 
-    
-	
     /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
 	* Buscar conteúdo:
 	* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
+	
+
 	if($_GET["a"] == "lista_user"){
 		
-		$res = $db->select("SELECT * FROM vendedor");
+		$pesquisa = $_POST['pesq'];
+        $where = "";
+
+        if($pesquisa != ""){
+            $where .= "WHERE (Nome LIKE '%{$pesquisa}%' OR CPF LIKE '%{$pesquisa}%' OR Comissão LIKE '%{$pesquisa}%')";
+        }    
+    
+		$res = $db->select("SELECT * FROM vendedor {$where}");
 		
 		if(count($res) > 0){
 			echo '<div class="table-responsive">';
@@ -146,7 +153,7 @@ include("dashboard.php");
 			async: true,
 			url: '?a=lista_user',
 			type: 'post',
-			data: { 			},
+			data: {pesq: $('#input_pesquisa').val()},
 			beforeSend: function(){
 				$('#div_conteudo').html('<div class="spinner-grow m-3 text-primary" role="status"><span class="visually-hidden">Aguarde...</span></div>');
 			},
@@ -348,7 +355,7 @@ include("dashboard.php");
 						<h5 id="tit_frm_formul_edit" class="modal-title">Editar Usuário</h5>
 					</div>
 				</div>
-				<button type="button" style="cursor: pointer; border: 1px solid #ccc; border-radius: 10px" aria-label="Fechar" onclick="$('#mod_formul').modal('hide');">X</button>
+				<button type="button" style="cursor: pointer; border: 1px solid #ccc; border-radius: 10px" aria-label="Fechar" onclick="$('#mod_formul_edit').modal('hide');">X</button>
 			</div>
 			<div class="modal-body modal-dialog-scrollable">
 				<form id="frm_general_edit" name="frm_general">
@@ -409,7 +416,7 @@ include("dashboard.php");
 	<div class="form-group row">
 		<div class="col-10">
 			<div class="input-group">
-			<input type="text" class="form-control" id="input_pesquisa" placeholder="Pesquisar">
+			<input type="text" class="form-control" onkeyup="lista_itens()" id="input_pesquisa" placeholder="Pesquisar">
 			</div>
 		</div>
 		<div class="col-2">
