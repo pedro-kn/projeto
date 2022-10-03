@@ -33,6 +33,18 @@
 				    Usuarios
 				</a>
 			</li>
+			<li class="nav-item">
+                <a class="nav-link" href="end_estoque.php">
+				    <span data-feather="user"></span>
+				    Endereços de Estoque
+				</a>
+			</li>
+			<li class="nav-item">
+                <a class="nav-link" href="itens_estoque.php">
+				    <span data-feather="user"></span>
+				    Itens do Estoque
+				</a>
+			</li>
 		</ul>
 		
 		

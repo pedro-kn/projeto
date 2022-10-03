@@ -19,18 +19,22 @@ if(isset($_GET["a"])){
         $where = "";
 
         if($pesquisa != ""){
-            $where .= "WHERE (endereco LIKE '%{$pesquisa}%')";
+            $where .= "WHERE (descricao LIKE '%{$pesquisa}%' OR endereco LIKE '%{$pesquisa}%' OR quantidade LIKE '%{$pesquisa}%')";
         }    
     
-		$res = $db->select("SELECT * FROM end_estoque {$where}");
+		$res = $db->select("SELECT p.descricao, e.endereco, quantidade, iditens_estoque
+                FROM ((itens_estoque i 
+                inner join end_estoque e on e.idend_estoque = i.idend_estoque)
+                inner join produtos p on p.idProdutos = i.idProdutos);");
 		
 		if(count($res) > 0){
 			echo '<div class="table-responsive">';
 			echo '<table id="tb_lista" class="table table-striped table-hover table-sm" style="font-size: 10pt">';
 				echo '<thead>';
 					echo '<tr>';
-						echo '<th style="text-align: left">Endereço de Estoque</th>';
-						
+						echo '<th style="text-align: left">Produto</th>';
+						echo '<th style="text-align: center">Endereço de Estoque</th>';
+						echo '<th style="text-align: center">Quantidade</th>';
                         echo '<th style="text-align: center">Editar</th>';
                         echo '<th style="text-align: center">Deletar</th>';
 					echo '</tr>';
@@ -38,13 +42,14 @@ if(isset($_GET["a"])){
 				echo '<tbody>';
                 foreach($res as $r){
 					echo '<tr>';
-						echo '<td style="text-align: left">'.$r["endereco"].'</td>';
-						
+						echo '<td style="text-align: left">'.$r["descricao"].'</td>';
+						echo '<td style="text-align: center">'.$r["endereco"].'</td>';
+						echo '<td style="text-align: center">'.$r["quantidade"].'</td>';
                         echo '<td style="text-align: center">';
-							echo '<i title="Editar" onclick="get_item(\''.$r["idend_estoque"].'\')" class="fas fa-edit" style="cursor: pointer"></i>';
+							echo '<i title="Editar" onclick="get_item(\''.$r["iditens_estoque"].'\')" class="fas fa-edit" style="cursor: pointer"></i>';
 						echo '</td>';
                         echo '<td style="text-align: center">';
-							echo '<i title="Deletar" onclick="del_item(\''.$r["idend_estoque"].'\')" class="fas fa-trash" style="cursor: pointer"></i>';
+							echo '<i title="Deletar" onclick="del_item(\''.$r["iditens_estoque"].'\')" class="fas fa-trash" style="cursor: pointer"></i>';
 						echo '</td>';
 					echo '</tr>';
 				}
@@ -62,10 +67,11 @@ if(isset($_GET["a"])){
 	* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 	if($_GET["a"] == "inclui_client"){
       
+        $descricao = $_POST["descricao"];
         $endereco = $_POST["endereco"];
-        
+        $quantidade = $_POST["quantidade"];
 		
-		$res = $db->_exec("INSERT INTO end_estoque (idend_estoque,endereco) VALUES ('','$endereco')");
+		$res = $db->_exec("INSERT INTO itens_estoque (iditens_estoque,idProdutos,idend_estoque,quantidade) VALUES ('','$descricao','$endereco','$quantidade')");
 
         echo $res;
 	}
@@ -77,13 +83,14 @@ if(isset($_GET["a"])){
         
 
         $id = $_POST["id"];
-        $endereco = $_POST["endereco"];
-       
+        $nome = $_POST["nome"];
+        $datanasc = $_POST["datanasc"];
+        $cpf = $_POST["cpf"];
         
 
-        $res = $db->_exec("UPDATE end_estoque 
-			SET idend_estoque = '{$id}', endereco = '{$endereco}'
-			WHERE idend_estoque = '{$id}'");
+        $res = $db->_exec("UPDATE cliente 
+			SET idCliente = '{$id}', Nome = '{$nome}', Data_Nasc = '{$datanasc}', CPF = '{$cpf}'
+			WHERE idCliente = '{$id}'");
 
         echo $res;
 	}
@@ -96,7 +103,7 @@ if(isset($_GET["a"])){
 
         $id = $_POST["id"];
 
-        $res = $db->_exec("DELETE FROM end_estoque WHERE idend_estoque = '{$id}'");
+        $res = $db->_exec("DELETE FROM cliente WHERE idCliente = '{$id}'");
 		
         echo $res;
 	}
@@ -109,11 +116,12 @@ if(isset($_GET["a"])){
 
         $id = $_POST["id"];
 
-        $res = $db->select("SELECT endereco FROM end_estoque WHERE idend_estoque = '{$id}'");
+        $res = $db->select("SELECT Nome, Data_Nasc, CPF FROM cliente WHERE idCliente = '{$id}'");
 		
         if(count($res) > 0){
-            $res[0]['endereco'] = utf8_encode($res[0]['endereco']);
-           
+            $res[0]['Nome'] = utf8_encode($res[0]['Nome']);
+            $res[0]['Data_Nasc'] = utf8_encode($res[0]['Data_Nasc']);
+			$res[0]['CPF'] = utf8_encode($res[0]['CPF']);
 			
             $a_retorno["res"] = $res;
             $c_retorno = json_encode($a_retorno["res"]);
@@ -167,8 +175,9 @@ include("dashboard.php");
 			url: '?a=inclui_client',
 			type: 'post',
 			data: { 
-                endereco: $('#Endereco').val(),
-                
+                descricao: $('#descricao').val(),
+                endereco: $('#endereco').val(),    
+                quantidade: $('#quantidade').val(),
                 
             },
 			beforeSend: function(){
@@ -216,8 +225,9 @@ include("dashboard.php");
                     
 					var obj_ret = JSON.parse(retorno);
 
-					$("#frm_endereco_edit").val(obj_ret[0].endereco);
-					
+					$("#frm_nome_edit").val(obj_ret[0].Nome);
+					$("#frm_datanasc_edit").val(obj_ret[0].Data_Nasc);
+					$("#frm_cpf_edit").val(obj_ret[0].CPF);	
 				}
 			}
 		});
@@ -236,8 +246,9 @@ include("dashboard.php");
 			type: 'post',
 			data: { 
                 id: $("#frm_id").val(),
-                endereco: $("#frm_endereco_edit").val(),
-                
+                nome: $("#frm_nome_edit").val(),
+                datanasc: $("#frm_datanasc_edit").val(),
+                cpf: $("#frm_cpf_edit").val(),
             },
 			beforeSend: function(){
                 $('#mod_formul_edit').html('<div class="spinner-grow m-3 text-primary" role="status"><span class="visually-hidden">Aguarde...</span></div>');
@@ -248,7 +259,7 @@ include("dashboard.php");
                     location.reload();
                     lista_itens();  
                 }else{
-                    alert("ERRO AO EDITAR ENDEREÇO! " + retorno);
+                    alert("ERRO AO EDITAR USUÁRIO! " + retorno);
                 }
 			}
 		});
@@ -259,7 +270,7 @@ include("dashboard.php");
 	* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 	var ajax_div = $.ajax(null);
 	function del_item(id){
-        if( confirm( "Deseja excluir o endereço?")){
+        if( confirm( "Deseja excluir o cliente?")){
             if(ajax_div){ ajax_div.abort(); }
 		        ajax_div = $.ajax({
 		    	cache: false,
@@ -274,7 +285,7 @@ include("dashboard.php");
 						location.reload();
                     	lista_itens();  
                 	}else{
-                    	alert("ERRO AO DELETAR ENDEREÇO! " + retorno);
+                    	alert("ERRO AO DELETAR USUÁRIO! " + retorno);
                 	}
 		    	}
 		    });
@@ -294,17 +305,53 @@ include("dashboard.php");
 						<h2 style="margin: 0"><span class="badge bg-info text-white" style="padding: 8px" id="span_endereco_nome"></span></h2>
 					</div>
 					<div>
-						<h5 id="tit_frm_formul" class="modal-title">Incluir Endereço de Estoque:</h5>
+						<h5 id="tit_frm_formul" class="modal-title">Incluir Itens no Estoque</h5>
 					</div>
 				</div>
 				<button type="button" style="cursor: pointer; border: 1px solid #ccc; border-radius: 10px" aria-label="Fechar" onclick="$('#mod_formul').modal('hide');">X</button>
 			</div>
 			<div class="modal-body modal-dialog-scrollable">
 				<form id="frm_general" name="frm_general">
-					<div class="row mb-3">
+					
+                    <div class="row mb-3">
 						<div class="col">
-							<label for="Endereco" class="form-label">Endereço:</label>
-							<input type="text" style="text-align: left" aria-describedby="Endereco" class="form-control form-control-lg" name="Endereco" id="Endereco" placeholder="">
+							<label for="descricao" class="form-label">Produto:</label>
+							<select id="descricao" class="form-control form-control-lg" name="descricao" type="text" >
+                                <option value="" selected></option>
+                                <?php
+                                    $desc = $db->select('SELECT * FROM produtos');
+                                    foreach($desc as $s){
+                                        echo  '<option value="'.$s["idProdutos"].'">'.$s["descricao"].'</option>';
+                                    }
+                                ?>
+				            </select>
+                        </div>
+					</div>
+
+                    <div class="row mb-3">
+						<div class="col">
+							<label for="endereco" class="form-label">Endereço de Estoque:</label>
+							<select id="endereco" class="form-control form-control-lg" name="endereco" type="text" >
+                                
+                                <option value="" selected></option>
+                                <?php
+                                    $est = $db->select('SELECT * FROM end_estoque');
+                                    foreach($est as $s){
+                                        echo  '<option value="'.$s["idend_estoque"].'">'.$s["endereco"].'</option>';
+                                    }
+                                ?>
+                            
+				            </select>
+                        </div>
+					</div>
+
+					
+
+					<div class="input-group">
+						<div class="col">
+							<label for="quantidade" class="form-label">Quantidade:</label>
+							<input type="number" style="text-align: left" aria-describedby="basic-addon2" class="form-control form-control-lg" name="quantidade" id="quantidade" placeholder="">
+								
 						</div>
 					</div>
 				</form>
@@ -327,7 +374,7 @@ include("dashboard.php");
 						<h2 style="margin: 0"><span class="badge bg-info text-white" style="padding: 8px" id="span_endereco_nome"></span></h2>
 					</div>
 					<div>
-						<h5 id="tit_frm_formul_edit" class="modal-title">Editar Endereço de Estoque:</h5>
+						<h5 id="tit_frm_formul_edit" class="modal-title">Editar Usuário</h5>
 					</div>
 				</div>
 				<button type="button" style="cursor: pointer; border: 1px solid #ccc; border-radius: 10px" aria-label="Fechar" onclick="$('#mod_formul_edit').modal('hide');">X</button>
@@ -337,12 +384,24 @@ include("dashboard.php");
 					<div class="row mb-3">
 						<div class="col">
                             <input type="text" style="text-align: left" aria-describedby="frm_id" class="form-control form-control-lg" name="frm_id" id="frm_id" hidden>
-							<label for="frm_endereco_edit" class="form-label">Endereço:</label>
-							<input type="text" style="text-align: left" aria-describedby="frm_endereco_edit" class="form-control form-control-lg" name="frm_endereco_edit" id="frm_endereco_edit" placeholder="">
+							<label for="frm_nome_edit" class="form-label">Nome:</label>
+							<input type="text" style="text-align: left" aria-describedby="frm_nome_edit" class="form-control form-control-lg" name="frm_nome_edit" id="frm_nome_edit" placeholder="">
 						</div>
 					</div>
 
-				
+					<div class="row mb-3">
+						<div class="col">
+							<label for="frm_datanasc_edit" class="form-label">Data de Nascimento:</label>
+							<input type="text" style="text-align: left" aria-describedby="frm_datanasc_edit" class="form-control form-control-lg" name="frm_datanasc_edit" id="frm_datanasc_edit" placeholder="">
+						</div>
+					</div>
+
+					<div class="row mb-3">
+						<div class="col">
+							<label for="frm_cpf_edit" class="form-label">CPF:</label>
+							<input type="text" style="text-align: left" aria-describedby="frm_cpf_edit" class="form-control form-control-lg" name="frm_cpf_edit" id="frm_cpf_edit" placeholder="">
+						</div>
+					</div>
 				</form>
 			</div>
 			<div class="modal-footer">
@@ -371,7 +430,7 @@ include("dashboard.php");
 	<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
 		<div style="display: flex; flex: 1">
 			<div style="flex: 1">
-				<h1 class="h2">Endereços de Estoque</h1>
+				<h1 class="h2">Itens do Estoque</h1>
 			</div>
 		</div>
 	</div>
