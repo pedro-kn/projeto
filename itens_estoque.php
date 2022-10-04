@@ -19,13 +19,15 @@ if(isset($_GET["a"])){
         $where = "";
 
         if($pesquisa != ""){
-            $where .= "WHERE (descricao LIKE '%{$pesquisa}%' OR endereco LIKE '%{$pesquisa}%' OR quantidade LIKE '%{$pesquisa}%')";
+            $where .= "WHERE p.descricao LIKE '%{$pesquisa}%' OR e.endereco LIKE '%{$pesquisa}%' OR quantidade LIKE '%{$pesquisa}%'";
         }    
     
 		$res = $db->select("SELECT p.descricao, e.endereco, quantidade, iditens_estoque
-                FROM ((itens_estoque i 
-                inner join end_estoque e on e.idend_estoque = i.idend_estoque)
-                inner join produtos p on p.idProdutos = i.idProdutos);");
+                FROM itens_estoque i 
+                left join end_estoque e on e.idend_estoque = i.idend_estoque
+                left join produtos p on p.idProdutos = i.idProdutos
+				{$where}
+				ORDER BY p.descricao ;");
 		
 		if(count($res) > 0){
 			echo '<div class="table-responsive">';
@@ -70,10 +72,31 @@ if(isset($_GET["a"])){
         $descricao = $_POST["descricao"];
         $endereco = $_POST["endereco"];
         $quantidade = $_POST["quantidade"];
-		
+	
 		$res = $db->_exec("INSERT INTO itens_estoque (iditens_estoque,idProdutos,idend_estoque,quantidade) VALUES ('','$descricao','$endereco','$quantidade')");
 
         echo $res;
+	}
+
+	 /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+	* Conferir se item já está incluso no estoque:
+	* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
+	
+	if($_GET["a"] == "confere_item"){
+		
+		$descricao = $_POST["descricao"]; //obtem o valor idProdutos, e nao o valor descrição
+
+		$res = $db->select("SELECT * FROM itens_estoque");
+		$check=0;
+			foreach($res as $r){
+				if($r["idProdutos"]==$descricao){
+				$check=true;
+				die();}
+				else{}
+			}
+			
+		$_POST["check"] = $check;
+		echo $res;	
 	}
 
     /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
@@ -83,14 +106,14 @@ if(isset($_GET["a"])){
         
 
         $id = $_POST["id"];
-        $nome = $_POST["nome"];
-        $datanasc = $_POST["datanasc"];
-        $cpf = $_POST["cpf"];
+        $descricao = $_POST["descricao"];
+        $endereco = $_POST["endereco"];
+        $quantidade = $_POST["quantidade"];
         
 
-        $res = $db->_exec("UPDATE cliente 
-			SET idCliente = '{$id}', Nome = '{$nome}', Data_Nasc = '{$datanasc}', CPF = '{$cpf}'
-			WHERE idCliente = '{$id}'");
+        $res = $db->_exec("UPDATE itens_estoque 
+			SET iditens_estoque = {$id},  quantidade = '{$quantidade}'
+			WHERE iditens_estoque = {$id}");
 
         echo $res;
 	}
@@ -103,7 +126,7 @@ if(isset($_GET["a"])){
 
         $id = $_POST["id"];
 
-        $res = $db->_exec("DELETE FROM cliente WHERE idCliente = '{$id}'");
+        $res = $db->_exec("DELETE FROM itens_estoque WHERE iditens_estoque = '{$id}'");
 		
         echo $res;
 	}
@@ -116,12 +139,16 @@ if(isset($_GET["a"])){
 
         $id = $_POST["id"];
 
-        $res = $db->select("SELECT Nome, Data_Nasc, CPF FROM cliente WHERE idCliente = '{$id}'");
+        $res = $db->select("SELECT iditens_estoque, p.descricao, e.endereco, quantidade
+			FROM itens_estoque i 
+			inner join end_estoque e on e.idend_estoque = i.idend_estoque
+			inner join produtos p on p.idProdutos = i.idProdutos
+			WHERE iditens_estoque = {$id}");
 		
         if(count($res) > 0){
-            $res[0]['Nome'] = utf8_encode($res[0]['Nome']);
-            $res[0]['Data_Nasc'] = utf8_encode($res[0]['Data_Nasc']);
-			$res[0]['CPF'] = utf8_encode($res[0]['CPF']);
+            $res[0]['descricao'] = utf8_encode($res[0]['descricao']);
+            $res[0]['endereco'] = utf8_encode($res[0]['endereco']);
+			$res[0]['quantidade'] = utf8_encode($res[0]['quantidade']);
 			
             $a_retorno["res"] = $res;
             $c_retorno = json_encode($a_retorno["res"]);
@@ -201,6 +228,43 @@ include("dashboard.php");
 		lista_itens();
 	});
 
+	  /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+	* Conferir itens:
+	* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
+	
+	var ajax_div = $.ajax(null);
+	const confereItem = () => {
+		//if( confirm( "Esse item já está Deseja ...... os itens do estoque?")){
+			if(ajax_div){ ajax_div.abort(); }
+				ajax_div = $.ajax({
+				cache: false,
+				async: true,
+				url: '?a=confere_item',
+				type: 'post',
+				data: {descricao: $('#descricao').val() , check: $('#check').val()},
+				beforeSend: function(){
+					$('#modal_formul').html('<div class="spinner-grow m-3 text-primary" role="status"><span class="visually-hidden">Aguarde...</span></div>');},
+				success: function retorno_ajax(retorno) {
+					if(retorno){
+						
+						if( val(check) ==true){
+							
+							location.reload();
+							lista_itens();}
+						else{
+							location.reload();
+							lista_itens();}	  
+					}else{
+						alert("ERRO AO CONFERIR ITEM! " + retorno);
+					}
+
+				}
+			});
+		//}else{
+          //  lista_itens();
+        //}
+	}
+
     /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
 	* Pesquisar itens:
 	* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
@@ -225,9 +289,9 @@ include("dashboard.php");
                     
 					var obj_ret = JSON.parse(retorno);
 
-					$("#frm_nome_edit").val(obj_ret[0].Nome);
-					$("#frm_datanasc_edit").val(obj_ret[0].Data_Nasc);
-					$("#frm_cpf_edit").val(obj_ret[0].CPF);	
+					$("#frm_val1_edit").val(obj_ret[0].descricao);
+					$("#frm_val2_edit").val(obj_ret[0].endereco);
+					$("#frm_val3_edit").val(obj_ret[0].quantidade);	
 				}
 			}
 		});
@@ -246,9 +310,9 @@ include("dashboard.php");
 			type: 'post',
 			data: { 
                 id: $("#frm_id").val(),
-                nome: $("#frm_nome_edit").val(),
-                datanasc: $("#frm_datanasc_edit").val(),
-                cpf: $("#frm_cpf_edit").val(),
+                descricao: $("#frm_val1_edit").val(),
+				endereco: $("#frm_val2_edit").val(),
+                quantidade: $("#frm_val3_edit").val(),
             },
 			beforeSend: function(){
                 $('#mod_formul_edit').html('<div class="spinner-grow m-3 text-primary" role="status"><span class="visually-hidden">Aguarde...</span></div>');
@@ -270,7 +334,7 @@ include("dashboard.php");
 	* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 	var ajax_div = $.ajax(null);
 	function del_item(id){
-        if( confirm( "Deseja excluir o cliente?")){
+        if( confirm( "Deseja excluir os itens do estoque?")){
             if(ajax_div){ ajax_div.abort(); }
 		        ajax_div = $.ajax({
 		    	cache: false,
@@ -285,7 +349,7 @@ include("dashboard.php");
 						location.reload();
                     	lista_itens();  
                 	}else{
-                    	alert("ERRO AO DELETAR USUÁRIO! " + retorno);
+                    	alert("ERRO AO DELETAR ITENS! " + retorno);
                 	}
 		    	}
 		    });
@@ -295,7 +359,7 @@ include("dashboard.php");
 	}
 </script>
 
-<!-- Modal formulário -->
+<!-- Modal formulário Inclusao -->
 <div class="modal" id="mod_formul">
 	<div class="modal-dialog modal-dialog-centered modal-dialog-scrollable modal-xl" style="max-width: 70%;">
 		<div class="modal-content">
@@ -316,7 +380,7 @@ include("dashboard.php");
                     <div class="row mb-3">
 						<div class="col">
 							<label for="descricao" class="form-label">Produto:</label>
-							<select id="descricao" class="form-control form-control-lg" name="descricao" type="text" >
+							<select id="descricao" class="form-control form-control-lg" onchange="confereItem();" name="descricao" type="text" >
                                 <option value="" selected></option>
                                 <?php
                                     $desc = $db->select('SELECT * FROM produtos');
@@ -364,7 +428,26 @@ include("dashboard.php");
 	</div>
 </div>
 
-<!-- Modal formulário -->
+<!-- Modal formulário Conferir Itens inclusao-->
+
+<div class="modal" id="mod_formul_conferir">
+	<div class="modal-dialog modal-dialog-centered modal-dialog-scrollable modal-xl" style="max-width: 70%;">
+		<div class="modal-content">
+			<div class="modal-header" style="align-items: center">
+				<div style="display: flex; align-items: center">
+					<div style="margin-right: 5px">
+						<h2 style="margin: 0"><span class="badge bg-info text-white" style="padding: 8px" id="span_endereco_nome"></span></h2>
+					</div>
+					<div>
+						<h5 id="tit_frm_formul_edit" class="modal-title">Alerta!</h5>
+					</div>
+				</div>
+			</div>		
+		</div>
+	</div>
+</div>
+
+<!-- Modal formulário Edição-->
 <div class="modal" id="mod_formul_edit">
 	<div class="modal-dialog modal-dialog-centered modal-dialog-scrollable modal-xl" style="max-width: 70%;">
 		<div class="modal-content">
@@ -374,7 +457,7 @@ include("dashboard.php");
 						<h2 style="margin: 0"><span class="badge bg-info text-white" style="padding: 8px" id="span_endereco_nome"></span></h2>
 					</div>
 					<div>
-						<h5 id="tit_frm_formul_edit" class="modal-title">Editar Usuário</h5>
+						<h5 id="tit_frm_formul_edit" class="modal-title">Editar Itens do Estoque</h5>
 					</div>
 				</div>
 				<button type="button" style="cursor: pointer; border: 1px solid #ccc; border-radius: 10px" aria-label="Fechar" onclick="$('#mod_formul_edit').modal('hide');">X</button>
@@ -384,22 +467,22 @@ include("dashboard.php");
 					<div class="row mb-3">
 						<div class="col">
                             <input type="text" style="text-align: left" aria-describedby="frm_id" class="form-control form-control-lg" name="frm_id" id="frm_id" hidden>
-							<label for="frm_nome_edit" class="form-label">Nome:</label>
-							<input type="text" style="text-align: left" aria-describedby="frm_nome_edit" class="form-control form-control-lg" name="frm_nome_edit" id="frm_nome_edit" placeholder="">
+							<label for="frm_val1_edit" class="form-label">Descrição:</label>
+							<input type="text" style="text-align: left" aria-describedby="frm_val1_edit" class="form-control form-control-lg" name="frm_val1_edit" id="frm_val1_edit" placeholder="" disabled>
 						</div>
 					</div>
 
 					<div class="row mb-3">
 						<div class="col">
-							<label for="frm_datanasc_edit" class="form-label">Data de Nascimento:</label>
-							<input type="text" style="text-align: left" aria-describedby="frm_datanasc_edit" class="form-control form-control-lg" name="frm_datanasc_edit" id="frm_datanasc_edit" placeholder="">
+							<label for="frm_val2_edit" class="form-label">Endereço:</label>
+							<input type="text" style="text-align: left" aria-describedby="frm_val2_edit" class="form-control form-control-lg" name="frm_val2_edit" id="frm_val2_edit" placeholder="" disabled>
 						</div>
 					</div>
 
 					<div class="row mb-3">
 						<div class="col">
-							<label for="frm_cpf_edit" class="form-label">CPF:</label>
-							<input type="text" style="text-align: left" aria-describedby="frm_cpf_edit" class="form-control form-control-lg" name="frm_cpf_edit" id="frm_cpf_edit" placeholder="">
+							<label for="frm_val3_edit" class="form-label">Quantidade:</label>
+							<input type="text" style="text-align: left" aria-describedby="frm_val3_edit" class="form-control form-control-lg" name="frm_val3_edit" id="frm_val3_edit" placeholder="">
 						</div>
 					</div>
 				</form>

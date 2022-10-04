@@ -11,7 +11,7 @@ if(isset($_GET["a"])){
     
 	
     /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
-	* Buscar conteúdo:
+	* Buscar conteúdo na div conteudo:
 	* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 	if($_GET["a"] == "lista_user"){
 		
@@ -19,18 +19,27 @@ if(isset($_GET["a"])){
         $where = "";
 
         if($pesquisa != ""){
-            $where .= "WHERE (endereco LIKE '%{$pesquisa}%')";
+            $where .= "WHERE idPedido LIKE '%{$pesquisa}%' OR idCliente LIKE '%{$pesquisa}%' OR idVendedor LIKE '%{$pesquisa}%' OR quantidade LIKE '%{$pesquisa}%' OR preco LIKE '%{$pesquisa}%' OR nf LIKE '%{$pesquisa}%' OR status LIKE '%{$pesquisa}%'";
         }    
     
-		$res = $db->select("SELECT * FROM end_estoque {$where} ORDER BY endereco");
+		$res = $db->select("SELECT p.idPedido, c.Nome as nomec, v.Nome as nomev, p.quantidade, p.preco, p.nf, p.status
+                            FROM pedidos p
+                            INNER JOIN cliente c ON c.idCliente = p.idCliente
+                            INNER JOIN vendedor v ON v.idVendedor = p.idVendedor
+                            {$where} ORDER BY idPedido");
 		
 		if(count($res) > 0){
 			echo '<div class="table-responsive">';
 			echo '<table id="tb_lista" class="table table-striped table-hover table-sm" style="font-size: 10pt">';
 				echo '<thead>';
 					echo '<tr>';
-						echo '<th style="text-align: left">Endereço de Estoque</th>';
-						
+						echo '<th style="text-align: left">idPedido</th>';
+						echo '<th style="text-align: center">idCliente</th>';
+						echo '<th style="text-align: center">idVendedor</th>';
+                        echo '<th style="text-align: center">Quantidade</th>';
+                        echo '<th style="text-align: center">Preço</th>';
+                        echo '<th style="text-align: center">Nota Fiscal</th>';
+                        echo '<th style="text-align: center">Status</th>';                                  
                         echo '<th style="text-align: center">Editar</th>';
                         echo '<th style="text-align: center">Deletar</th>';
 					echo '</tr>';
@@ -38,13 +47,19 @@ if(isset($_GET["a"])){
 				echo '<tbody>';
                 foreach($res as $r){
 					echo '<tr>';
-						echo '<td style="texto-align: left">'.$r["endereco"].'</td>';
-						
+						echo '<td style="text-align: left">'.$r["idPedido"].'</td>';
+						echo '<td style="text-align: center">'.$r["nomec"].'</td>';
+						echo '<td style="text-align: center">'.$r["nomev"].'</td>';
+                        echo '<td style="text-align: center">'.$r["quantidade"].'</td>';
+                        echo '<td style="text-align: center">'.$r["preco"].'</td>';
+                        echo '<td style="text-align: center">'.$r["nf"].'</td>';
+                        echo '<td style="text-align: center">'.$r["status"].'</td>';
+
                         echo '<td style="text-align: center">';
-							echo '<i title="Editar" onclick="get_item(\''.$r["idend_estoque"].'\')" class="fas fa-edit" style="cursor: pointer"></i>';
+							echo '<i title="Editar" onclick="get_item(\''.$r["idPedido"].'\')" class="fas fa-edit" style="cursor: pointer"></i>';
 						echo '</td>';
                         echo '<td style="text-align: center">';
-							echo '<i title="Deletar" onclick="del_item(\''.$r["idend_estoque"].'\')" class="fas fa-trash" style="cursor: pointer"></i>';
+							echo '<i title="Deletar" onclick="del_item(\''.$r["idPedido"].'\')" class="fas fa-trash" style="cursor: pointer"></i>';
 						echo '</td>';
 					echo '</tr>';
 				}
@@ -57,18 +72,23 @@ if(isset($_GET["a"])){
 			echo '</div>';
 		}
 	}
+
+    
     /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
 	* Inserir conteúdo:
 	* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 	if($_GET["a"] == "inclui_client"){
       
+        $descricao = $_POST["descricao"];
         $endereco = $_POST["endereco"];
-        
-		
-		$res = $db->_exec("INSERT INTO end_estoque (idend_estoque,endereco) VALUES ('','$endereco')");
+        $quantidade = $_POST["quantidade"];
+	
+		$res = $db->_exec("INSERT INTO itens_estoque (iditens_estoque,idProdutos,idend_estoque,quantidade) VALUES ('','$descricao','$endereco','$quantidade')");
 
         echo $res;
 	}
+
+	
 
     /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
 	* Edita conteúdo:
@@ -77,13 +97,14 @@ if(isset($_GET["a"])){
         
 
         $id = $_POST["id"];
+        $descricao = $_POST["descricao"];
         $endereco = $_POST["endereco"];
-       
+        $quantidade = $_POST["quantidade"];
         
 
-        $res = $db->_exec("UPDATE end_estoque 
-			SET idend_estoque = '{$id}', endereco = '{$endereco}'
-			WHERE idend_estoque = '{$id}'");
+        $res = $db->_exec("UPDATE itens_estoque 
+			SET iditens_estoque = {$id},  quantidade = '{$quantidade}'
+			WHERE iditens_estoque = {$id}");
 
         echo $res;
 	}
@@ -96,7 +117,7 @@ if(isset($_GET["a"])){
 
         $id = $_POST["id"];
 
-        $res = $db->_exec("DELETE FROM end_estoque WHERE idend_estoque = '{$id}'");
+        $res = $db->_exec("DELETE FROM itens_estoque WHERE iditens_estoque = '{$id}'");
 		
         echo $res;
 	}
@@ -109,11 +130,16 @@ if(isset($_GET["a"])){
 
         $id = $_POST["id"];
 
-        $res = $db->select("SELECT endereco FROM end_estoque WHERE idend_estoque = '{$id}'");
+        $res = $db->select("SELECT iditens_estoque, p.descricao, e.endereco, quantidade
+			FROM itens_estoque i 
+			inner join end_estoque e on e.idend_estoque = i.idend_estoque
+			inner join produtos p on p.idProdutos = i.idProdutos
+			WHERE iditens_estoque = {$id}");
 		
         if(count($res) > 0){
+            $res[0]['descricao'] = utf8_encode($res[0]['descricao']);
             $res[0]['endereco'] = utf8_encode($res[0]['endereco']);
-           
+			$res[0]['quantidade'] = utf8_encode($res[0]['quantidade']);
 			
             $a_retorno["res"] = $res;
             $c_retorno = json_encode($a_retorno["res"]);
@@ -155,6 +181,8 @@ include("dashboard.php");
 		});
 	}
     
+
+
     /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
 	* Incluir itens:
 	* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
@@ -167,8 +195,9 @@ include("dashboard.php");
 			url: '?a=inclui_client',
 			type: 'post',
 			data: { 
-                endereco: $('#Endereco').val(),
-                
+                cliente: $('#frm_val1_insert').val(),
+                endereco: $('#frm_val2_insert').val(),    
+                quantidade: $('#frm_val3_insert').val(),
                 
             },
 			beforeSend: function(){
@@ -191,6 +220,7 @@ include("dashboard.php");
 	$(document).ready(function() {
 		lista_itens();
 	});
+
 
     /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
 	* Pesquisar itens:
@@ -216,8 +246,9 @@ include("dashboard.php");
                     
 					var obj_ret = JSON.parse(retorno);
 
-					$("#frm_endereco_edit").val(obj_ret[0].endereco);
-					
+					$("#frm_val1_edit").val(obj_ret[0].descricao);
+					$("#frm_val2_edit").val(obj_ret[0].endereco);
+					$("#frm_val3_edit").val(obj_ret[0].quantidade);	
 				}
 			}
 		});
@@ -236,8 +267,9 @@ include("dashboard.php");
 			type: 'post',
 			data: { 
                 id: $("#frm_id").val(),
-                endereco: $("#frm_endereco_edit").val(),
-                
+                descricao: $("#frm_val1_edit").val(),
+				endereco: $("#frm_val2_edit").val(),
+                quantidade: $("#frm_val3_edit").val(),
             },
 			beforeSend: function(){
                 $('#mod_formul_edit').html('<div class="spinner-grow m-3 text-primary" role="status"><span class="visually-hidden">Aguarde...</span></div>');
@@ -248,7 +280,7 @@ include("dashboard.php");
                     location.reload();
                     lista_itens();  
                 }else{
-                    alert("ERRO AO EDITAR ENDEREÇO! " + retorno);
+                    alert("ERRO AO EDITAR USUÁRIO! " + retorno);
                 }
 			}
 		});
@@ -259,7 +291,7 @@ include("dashboard.php");
 	* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 	var ajax_div = $.ajax(null);
 	function del_item(id){
-        if( confirm( "Deseja excluir o endereço?")){
+        if( confirm( "Deseja excluir os itens do estoque?")){
             if(ajax_div){ ajax_div.abort(); }
 		        ajax_div = $.ajax({
 		    	cache: false,
@@ -274,7 +306,7 @@ include("dashboard.php");
 						location.reload();
                     	lista_itens();  
                 	}else{
-                    	alert("ERRO AO DELETAR ENDEREÇO! " + retorno);
+                    	alert("ERRO AO DELETAR ITENS! " + retorno);
                 	}
 		    	}
 		    });
@@ -284,7 +316,7 @@ include("dashboard.php");
 	}
 </script>
 
-<!-- Modal formulário -->
+<!-- Modal formulário Inclusao -->
 <div class="modal" id="mod_formul">
 	<div class="modal-dialog modal-dialog-centered modal-dialog-scrollable modal-xl" style="max-width: 70%;">
 		<div class="modal-content">
@@ -294,19 +326,29 @@ include("dashboard.php");
 						<h2 style="margin: 0"><span class="badge bg-info text-white" style="padding: 8px" id="span_endereco_nome"></span></h2>
 					</div>
 					<div>
-						<h5 id="tit_frm_formul" class="modal-title">Incluir Endereço de Estoque:</h5>
+						<h5 id="tit_frm_formul" class="modal-title">Incluir Peidos</h5>
 					</div>
 				</div>
 				<button type="button" style="cursor: pointer; border: 1px solid #ccc; border-radius: 10px" aria-label="Fechar" onclick="$('#mod_formul').modal('hide');">X</button>
 			</div>
 			<div class="modal-body modal-dialog-scrollable">
 				<form id="frm_general" name="frm_general">
-					<div class="row mb-3">
+                
+                    <div class="row mb-3">
 						<div class="col">
-							<label for="Endereco" class="form-label">Endereço:</label>
-							<input type="text" style="text-align: left" aria-describedby="Endereco" class="form-control form-control-lg" name="Endereco" id="Endereco" placeholder="">
-						</div>
+							<label for="frm_val1_insert" class="form-label">Cliente:</label>
+							<select id="frm_val1_insert" class="form-control form-control-lg" name="frm_val1_insert" type="text" >
+                                <option value="" selected></option>
+                                <?php
+                                    $desc = $db->select('SELECT * FROM produtos');
+                                    foreach($desc as $s){
+                                        echo  '<option value="'.$s["idProdutos"].'">'.$s["descricao"].'</option>';
+                                    }
+                                ?>
+				            </select>
+                        </div>
 					</div>
+                    
 				</form>
 			</div>
 			<div class="modal-footer">
@@ -317,7 +359,8 @@ include("dashboard.php");
 	</div>
 </div>
 
-<!-- Modal formulário -->
+
+<!-- Modal formulário Edição-->
 <div class="modal" id="mod_formul_edit">
 	<div class="modal-dialog modal-dialog-centered modal-dialog-scrollable modal-xl" style="max-width: 70%;">
 		<div class="modal-content">
@@ -327,7 +370,7 @@ include("dashboard.php");
 						<h2 style="margin: 0"><span class="badge bg-info text-white" style="padding: 8px" id="span_endereco_nome"></span></h2>
 					</div>
 					<div>
-						<h5 id="tit_frm_formul_edit" class="modal-title">Editar Endereço de Estoque:</h5>
+						<h5 id="tit_frm_formul_edit" class="modal-title">Editar Itens do Estoque</h5>
 					</div>
 				</div>
 				<button type="button" style="cursor: pointer; border: 1px solid #ccc; border-radius: 10px" aria-label="Fechar" onclick="$('#mod_formul_edit').modal('hide');">X</button>
@@ -337,12 +380,24 @@ include("dashboard.php");
 					<div class="row mb-3">
 						<div class="col">
                             <input type="text" style="text-align: left" aria-describedby="frm_id" class="form-control form-control-lg" name="frm_id" id="frm_id" hidden>
-							<label for="frm_endereco_edit" class="form-label">Endereço:</label>
-							<input type="text" style="text-align: left" aria-describedby="frm_endereco_edit" class="form-control form-control-lg" name="frm_endereco_edit" id="frm_endereco_edit" placeholder="">
+							<label for="frm_val1_edit" class="form-label">Descrição:</label>
+							<input type="text" style="text-align: left" aria-describedby="frm_val1_edit" class="form-control form-control-lg" name="frm_val1_edit" id="frm_val1_edit" placeholder="" disabled>
 						</div>
 					</div>
 
-				
+					<div class="row mb-3">
+						<div class="col">
+							<label for="frm_val2_edit" class="form-label">Endereço:</label>
+							<input type="text" style="text-align: left" aria-describedby="frm_val2_edit" class="form-control form-control-lg" name="frm_val2_edit" id="frm_val2_edit" placeholder="" disabled>
+						</div>
+					</div>
+
+					<div class="row mb-3">
+						<div class="col">
+							<label for="frm_val3_edit" class="form-label">Quantidade:</label>
+							<input type="text" style="text-align: left" aria-describedby="frm_val3_edit" class="form-control form-control-lg" name="frm_val3_edit" id="frm_val3_edit" placeholder="">
+						</div>
+					</div>
 				</form>
 			</div>
 			<div class="modal-footer">
@@ -371,7 +426,7 @@ include("dashboard.php");
 	<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
 		<div style="display: flex; flex: 1">
 			<div style="flex: 1">
-				<h1 class="h2">Endereços de Estoque</h1>
+				<h1 class="h2">Peidos</h1>
 			</div>
 		</div>
 	</div>

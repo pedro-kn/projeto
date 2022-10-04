@@ -47,6 +47,18 @@
 			</li>
 		</ul>
 		
+		<h6 class="sidebar-heading d-flex justify-content-between align-items-center px-3 mt-4 mb-1 text-muted">
+			<span>Titulo Bacana</span>
+		</h6>
+		<ul class="nav flex-column mb-2">	
+			<li class="nav-item">
+				<a class="nav-link" href="pedidos.php">
+				    <span data-feather="fa fa-dashboard"></span>
+				    Pedidos
+				</a>
+			</li>	
+			
+		</ul>
 		
 	</div>
 </nav>

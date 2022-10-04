@@ -366,7 +366,7 @@ include("dashboard.php");
 						<h2 style="margin: 0"><span class="badge bg-info text-white" style="padding: 8px" id="span_endereco_nome"></span></h2>
 					</div>
 					<div>
-						<h5 id="tit_frm_formul_edit" class="modal-title">Editar Usuário</h5>
+						<h5 id="tit_frm_formul_edit" class="modal-title">Editar Produto</h5>
 					</div>
 				</div>
 				<button type="button" style="cursor: pointer; border: 1px solid #ccc; border-radius: 10px" aria-label="Fechar" onclick="$('#mod_formul_edit').modal('hide');">X</button>
