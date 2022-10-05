@@ -91,12 +91,10 @@ if(isset($_GET["a"])){
 			foreach($res as $r){
 				if($r["idProdutos"]==$descricao){
 				$check=true;
-				die();}
-				else{}
+				}
 			}
 			
-		$_POST["check"] = $check;
-		echo $res;	
+		echo $check;	
 	}
 
     /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
@@ -241,19 +239,13 @@ include("dashboard.php");
 				async: true,
 				url: '?a=confere_item',
 				type: 'post',
-				data: {descricao: $('#descricao').val() , check: $('#check').val()},
+				data: {descricao: $('#descricao').val() ,},
 				beforeSend: function(){
 					$('#modal_formul').html('<div class="spinner-grow m-3 text-primary" role="status"><span class="visually-hidden">Aguarde...</span></div>');},
 				success: function retorno_ajax(retorno) {
 					if(retorno){
-						
-						if( val(check) ==true){
-							
-							location.reload();
-							lista_itens();}
-						else{
-							location.reload();
-							lista_itens();}	  
+							alert("Esse item já se encontra no estoque!");
+							lista_itens();	 
 					}else{
 						alert("ERRO AO CONFERIR ITEM! " + retorno);
 					}

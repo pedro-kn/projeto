@@ -73,6 +73,45 @@ if(isset($_GET["a"])){
 		}
 	}
 
+	/* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+	* Ocultamente cria o pedido, e após Exibe lista de itens na div modInsert:
+	* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
+	if($_GET["a"] == "lista_mod_insert"){    
+    
+		
+		
+		$res = $db->select("SELECT descricao, Preço FROM produtos ORDER BY descricao");
+		
+		if(count($res) > 0){
+			echo '<div class="table-responsive">';
+			echo '<table id="tb_lista" class="table table-striped table-hover table-sm" style="font-size: 10pt">';
+				echo '<thead>';
+					echo '<tr>';
+						echo '<th style="text-align: left">Descrição</th>';
+						echo '<th style="text-align: center">Preço</th>';
+                        echo '<th style="text-align: center">Quantidade</th>';
+					echo '</tr>';
+				echo '</thead>';
+				echo '<tbody>';
+                foreach($res as $r){
+					echo '<tr>';
+						echo '<td  style="text-align: left">'.$r["descricao"].'</td>';
+						echo '<td style="text-align: center">'.$r["Preço"].'</td>';
+						echo '<td style="text-align: center">';
+							echo '<input type="number" onchange="incluiClient(this.value,\''.$r["idProdutos"].'\',\''.$numped.'\')" min="0" max="100"></input>';
+						echo '</td>';
+					echo '</tr>';
+				}
+				echo '</tbody>';
+			echo '</table>';
+			echo '</div>';
+		}else{
+			echo '<div class="alert alert-warning" role="alert">';
+				echo 'Nenhum registro localizado!';
+			echo '</div>';
+		}
+	}
+
     
     /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
 	* Inserir conteúdo:
@@ -181,7 +220,26 @@ include("dashboard.php");
 		});
 	}
     
-
+    /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+	* Exibir no modal os itens para inclusão:
+	* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
+	var ajax_div = $.ajax(null);
+	const listaModinsert = () => {
+		if(ajax_div){ ajax_div.abort(); }
+			ajax_div = $.ajax({
+			cache: false,
+			async: true,
+			url: '?a=lista_mod_insert',
+			type: 'post',
+			data: {pesq: $('#input_pesquisa').val() 			},
+			beforeSend: function(){
+				$('#mod_insert').html('<div class="spinner-grow m-3 text-primary" role="status"><span class="visually-hidden">Aguarde...</span></div>');
+			},
+			success: function retorno_ajax(retorno) {
+				$('#mod_insert').html(retorno); 
+			}
+		});
+	}
 
     /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
 	* Incluir itens:
@@ -333,22 +391,42 @@ include("dashboard.php");
 			</div>
 			<div class="modal-body modal-dialog-scrollable">
 				<form id="frm_general" name="frm_general">
-                
-                    <div class="row mb-3">
+
+				<div class="row mb-3">
 						<div class="col">
-							<label for="frm_val1_insert" class="form-label">Cliente:</label>
-							<select id="frm_val1_insert" class="form-control form-control-lg" name="frm_val1_insert" type="text" >
-                                <option value="" selected></option>
-                                <?php
-                                    $desc = $db->select('SELECT * FROM produtos');
-                                    foreach($desc as $s){
-                                        echo  '<option value="'.$s["idProdutos"].'">'.$s["descricao"].'</option>';
-                                    }
-                                ?>
-				            </select>
+							<label for="frm_val1_insert" class="form-label">Vendedor:</label>
+								<div class="scrollable">
+								<select id="frm_val1_insert"  class="select form-control form-control-lg" name="frm_val1_insert" type="text" >
+									<option value="" selected></option>
+									<?php
+										$desc = $db->select('SELECT idVendedor, Nome FROM vendedor');
+										foreach($desc as $s){
+											echo  '<option value="'.$s["idVendedor"].'">'.$s["Nome"].'</option>';
+										}
+									?>
+								</select>
+							</div>
                         </div>
 					</div>
-                    
+                    <div class="row mb-3">
+						<div class="col">
+							<label for="frm_val2_insert" class="form-label">Cliente:</label>
+								<div class="scrollable">
+								<select id="frm_val2_insert"  onchange="listaModinsert()" class="select form-control form-control-lg" name="frm_val2_insert" type="text" >
+									<option value="" selected></option>
+									<?php
+										$desc = $db->select('SELECT idCliente, Nome FROM cliente');
+										foreach($desc as $s){
+											echo  '<option value="'.$s["idCliente"].'">'.$s["Nome"].'</option>';
+										}
+									?>
+								</select>
+							</div>
+                        </div>
+					</div>
+					
+					<div id="mod_insert"></div>	
+   
 				</form>
 			</div>
 			<div class="modal-footer">
