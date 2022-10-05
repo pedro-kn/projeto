@@ -22,7 +22,7 @@ if(isset($_GET["a"])){
             $where .= "WHERE idPedido LIKE '%{$pesquisa}%' OR idCliente LIKE '%{$pesquisa}%' OR idVendedor LIKE '%{$pesquisa}%' OR quantidade LIKE '%{$pesquisa}%' OR preco LIKE '%{$pesquisa}%' OR nf LIKE '%{$pesquisa}%' OR status LIKE '%{$pesquisa}%'";
         }    
     
-		$res = $db->select("SELECT p.idPedido, c.Nome as nomec, v.Nome as nomev, p.quantidade, p.preco, p.nf, p.status
+		$res = $db->select("SELECT p.idPedido, c.Nome as nomec, v.Nome as nomev, p.quantidade, p.preco, p.nf, p.statusped
                             FROM pedidos p
                             INNER JOIN cliente c ON c.idCliente = p.idCliente
                             INNER JOIN vendedor v ON v.idVendedor = p.idVendedor
@@ -53,7 +53,7 @@ if(isset($_GET["a"])){
                         echo '<td style="text-align: center">'.$r["quantidade"].'</td>';
                         echo '<td style="text-align: center">'.$r["preco"].'</td>';
                         echo '<td style="text-align: center">'.$r["nf"].'</td>';
-                        echo '<td style="text-align: center">'.$r["status"].'</td>';
+                        echo '<td style="text-align: center">'.$r["statusped"].'</td>';
 
                         echo '<td style="text-align: center">';
 							echo '<i title="Editar" onclick="get_item(\''.$r["idPedido"].'\')" class="fas fa-edit" style="cursor: pointer"></i>';
@@ -78,9 +78,18 @@ if(isset($_GET["a"])){
 	* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 	if($_GET["a"] == "lista_mod_insert"){    
     
+		$vendedor = $_POST["vendedor"];
+        $cliente = $_POST["cliente"];
+
+		$ped = $db->_exec("INSERT INTO pedidos (idCliente,idVendedor,statusped) VALUES ($cliente,'$vendedor','1')");
 		
-		
-		$res = $db->select("SELECT descricao, Preço FROM produtos ORDER BY descricao");
+		$s = $db->select("SELECT idPedido FROM pedidos WHERE idCliente = $cliente AND idVendedor = '$vendedor' ORDER BY idPedido DESC LIMIT 1");
+
+		foreach($s as $s1){
+			$numped = $s1["idPedido"];
+		}
+
+		$res = $db->select("SELECT idProdutos, descricao, Preço FROM produtos ORDER BY descricao");
 		
 		if(count($res) > 0){
 			echo '<div class="table-responsive">';
@@ -98,7 +107,7 @@ if(isset($_GET["a"])){
 						echo '<td  style="text-align: left">'.$r["descricao"].'</td>';
 						echo '<td style="text-align: center">'.$r["Preço"].'</td>';
 						echo '<td style="text-align: center">';
-							echo '<input type="number" onchange="incluiClient(this.value,\''.$r["idProdutos"].'\',\''.$numped.'\')" min="0" max="100"></input>';
+							echo '<input type="number" onchange="incluiPed(this.value,\''.$r["idProdutos"].'\',\''.$numped.'\')" min="0" max="100"></input>';
 						echo '</td>';
 					echo '</tr>';
 				}
@@ -112,17 +121,43 @@ if(isset($_GET["a"])){
 		}
 	}
 
-    
     /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
-	* Inserir conteúdo:
+	* Inserir conteúdo dentro da lista de pedidos criada em lista_mod_insert:
+	* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
+	if($_GET["a"] == "inclui_pedido"){
+      
+        $quantidade = $_POST["quantidade"];
+        $produto = $_POST["produto"];
+        $pedido = $_POST["pedido"];
+	
+		$sel = $db->select("SELECT Preço FROM produtos WHERE idProdutos = $produto");
+		
+			if(count($sel)>0){
+				$preco = floatval($sel[0]["Preço"])*$quantidade;
+			}
+
+		$res = $db->_exec("INSERT INTO itens_pedido (idPedido,idProdutos,quantidade,valor_final) VALUES ($pedido,'$produto',$quantidade,$preco)");
+
+        echo $res;
+	}
+
+
+
+    /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+	* Confirmar a inserção de conteúdo dentro da lista de pedidos criada em lista_mod_insert:
 	* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 	if($_GET["a"] == "inclui_client"){
       
-        $descricao = $_POST["descricao"];
-        $endereco = $_POST["endereco"];
-        $quantidade = $_POST["quantidade"];
-	
-		$res = $db->_exec("INSERT INTO itens_estoque (iditens_estoque,idProdutos,idend_estoque,quantidade) VALUES ('','$descricao','$endereco','$quantidade')");
+        $numpedido = $_POST["numpedido"];
+        
+		$sel = $db->select("SELECT idPedido, quantidade, valor_final FROM itens_pedido WHERE idPedido = $numpedido");
+
+		if(count($sel)>0){
+			$somaquantidade = array_sum($sel["quantidade"]);
+			$somavalor = array_sum($sel["valor_final"]);
+		}
+		
+		$res = $db->_exec("UPDATE TABLE pedidos SET quantidade = $somaquantidade, preco = $somavalor, statusped = 2 WHERE idPedido = $numpedido");
 
         echo $res;
 	}
@@ -221,6 +256,30 @@ include("dashboard.php");
 	}
     
     /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+	* inclui no modal os itens para inclusão:
+	* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
+	var ajax_div = $.ajax(null);
+	const incluiPed = (quantidade,produto,pedido) => {
+		if(ajax_div){ ajax_div.abort(); }
+			ajax_div = $.ajax({
+			cache: false,
+			async: true,
+			url: '?a=inclui_pedido',
+			type: 'post',
+			data: {quantidade: quantidade,
+				produto: produto,
+                pedido: pedido},
+			
+			success: function retorno_ajax(retorno) {
+				$('#numpedido').val(pedido);
+				if(!retorno){
+					alert("ERRO AO INLUIR ITEM NO PEDIDO!");
+				} 
+			}
+		});
+	}
+
+	/* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
 	* Exibir no modal os itens para inclusão:
 	* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 	var ajax_div = $.ajax(null);
@@ -231,7 +290,9 @@ include("dashboard.php");
 			async: true,
 			url: '?a=lista_mod_insert',
 			type: 'post',
-			data: {pesq: $('#input_pesquisa').val() 			},
+			data: {pesq: $('#input_pesquisa').val(),
+				vendedor: $('#frm_val1_insert').val(),
+                cliente: $('#frm_val2_insert').val()},
 			beforeSend: function(){
 				$('#mod_insert').html('<div class="spinner-grow m-3 text-primary" role="status"><span class="visually-hidden">Aguarde...</span></div>');
 			},
@@ -240,6 +301,7 @@ include("dashboard.php");
 			}
 		});
 	}
+
 
     /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
 	* Incluir itens:
@@ -253,10 +315,8 @@ include("dashboard.php");
 			url: '?a=inclui_client',
 			type: 'post',
 			data: { 
-                cliente: $('#frm_val1_insert').val(),
-                endereco: $('#frm_val2_insert').val(),    
-                quantidade: $('#frm_val3_insert').val(),
-                
+                numpedido: $('#numpedido').val(),
+              
             },
 			beforeSend: function(){
 
@@ -421,6 +481,7 @@ include("dashboard.php");
 										}
 									?>
 								</select>
+								<input id=numpedido hidden></input>
 							</div>
                         </div>
 					</div>
