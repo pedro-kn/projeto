@@ -150,14 +150,16 @@ if(isset($_GET["a"])){
 	* Confirmar a inserção de conteúdo dentro da lista de pedidos criada em lista_mod_insert:
 	* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 	if($_GET["a"] == "inclui_client"){
-      
+		
+		//obtem o numerdo do pedido da tabela itens pedido a ser incluso
         $numpedido = $_POST["numpedido"];
 		
 		$somaquantidade = 0;
 		$somavalor = 0;
         
-		$sel = $db->select("SELECT idPedido, quantidade, valor_final FROM itens_pedido WHERE idPedido = $numpedido");
+		$sel = $db->select("SELECT idPedido, idProdutos, quantidade, valor_final FROM itens_pedido WHERE idPedido = $numpedido");
 
+		//logica para a soma dos valores quantidade e valor para fazer o update na tabela de pedidos
 		if(count($sel)>0){
 			foreach($sel as $s){
 				$somaquantidade = $somaquantidade + $s["quantidade"];
@@ -165,6 +167,7 @@ if(isset($_GET["a"])){
 			}	
 		}
 
+		//logicas para gerar os valores de nota fiscal
 		$numero = intval(rand(1,pow(10,6)));
 		
 		$sum = 0;
@@ -178,9 +181,23 @@ if(isset($_GET["a"])){
 		
 		$nfe = $db->_exec("INSERT INTO nf (idPedido,numero,serie,chave,data_hora) VALUES ($numpedido,$numero,1,'$chave',LOCALTIME())");		
 		
-		//echo $nfe;	
-
+		//update nos valores da tabela pedidos
 		$res = $db->_exec("UPDATE pedidos SET quantidade = $somaquantidade, preco = $somavalor, nf = '$numero', statusped = 2 WHERE idPedido = $numpedido");
+		
+		//baixa nos estoques pós emissao da nf
+		$sel1 = $db->select("SELECT idProdutos FROM itens_pedido WHERE idPedido = $numpedido ");
+		$pesq = $db->select("SELECT idProdutos, quantidade FROM itens_estoque");
+			foreach($pesq as $p){
+				if($p["idProdutos"] == $sel1["idProdutos"]){
+					$subtracao = floatval($p["quantidade"]) - floatval($sel1["quantidade"]);
+					$baixa = $db->_exec("UPDATE itens_estoque SET quantidade = $subtracao");
+				}
+				else{
+					
+				}
+			}
+
+			
 
         echo $res;
 	}

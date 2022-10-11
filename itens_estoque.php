@@ -87,7 +87,7 @@ if(isset($_GET["a"])){
 		$descricao = $_POST["descricao"]; //obtem o valor idProdutos, e nao o valor descrição
 
 		$res = $db->select("SELECT * FROM itens_estoque");
-		$check=0;
+		$check=false;
 			foreach($res as $r){
 				if($r["idProdutos"]==$descricao){
 				$check=true;
@@ -124,9 +124,22 @@ if(isset($_GET["a"])){
 
         $id = $_POST["id"];
 
-        $res = $db->_exec("DELETE FROM itens_estoque WHERE iditens_estoque = '{$id}'");
+		$est = $db->select("SELECT idProdutos FROM itens_estoque WHERE iditens_estoque = '{$id}'");
 		
-        echo $res;
+		$ped = $db->select("SELECT idProdutos FROM itens_pedido");
+		
+		$check = false;
+		// corrigir essa logica eventualmente
+		foreach($ped as $p){
+			if($p["idProdutos"] == $est){
+				$check = true;
+			}
+			else{
+				//$res = $db->_exec("DELETE FROM itens_estoque WHERE iditens_estoque = '{$id}'");
+			}
+		}
+		echo $check;
+        //echo $res;
 	}
 
     /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
@@ -247,7 +260,7 @@ include("dashboard.php");
 							alert("Esse item já se encontra no estoque!");
 							lista_itens();	 
 					}else{
-						alert("ERRO AO CONFERIR ITEM! " + retorno);
+						//alert("ERRO AO CONFERIR ITEM! " + retorno);
 					}
 
 				}
@@ -338,6 +351,7 @@ include("dashboard.php");
                 },
 		    	success: function retorno_ajax(retorno) {
                     if(retorno){
+						alert("Deletados " + retorno);
 						location.reload();
                     	lista_itens();  
                 	}else{
