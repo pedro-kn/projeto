@@ -34,8 +34,8 @@ if(isset($_GET["a"])){
 				echo '<thead>';
 					echo '<tr>';
 						echo '<th style="text-align: left">idPedido</th>';
-						echo '<th style="text-align: center">idCliente</th>';
-						echo '<th style="text-align: center">idVendedor</th>';
+						echo '<th style="text-align: center">Nome do Cliente</th>';
+						echo '<th style="text-align: center">Nome do Vendedor</th>';
                         echo '<th style="text-align: center">Quantidade</th>';
                         echo '<th style="text-align: center">Preço</th>';
                         echo '<th style="text-align: center">Nota Fiscal</th>';
@@ -125,7 +125,9 @@ if(isset($_GET["a"])){
 	* Inserir conteúdo dentro da lista de pedidos criada em lista_mod_insert:
 	* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 	if($_GET["a"] == "inclui_pedido"){
-      
+		
+
+
         $quantidade = $_POST["quantidade"];
         $produto = $_POST["produto"];
         $pedido = $_POST["pedido"];
@@ -137,7 +139,8 @@ if(isset($_GET["a"])){
 			}
 
 		$res = $db->_exec("INSERT INTO itens_pedido (idPedido,idProdutos,quantidade,valor_final) VALUES ($pedido,'$produto',$quantidade,$preco)");
-
+		
+		
         echo $res;
 	}
 
@@ -149,15 +152,35 @@ if(isset($_GET["a"])){
 	if($_GET["a"] == "inclui_client"){
       
         $numpedido = $_POST["numpedido"];
+		
+		$somaquantidade = 0;
+		$somavalor = 0;
         
 		$sel = $db->select("SELECT idPedido, quantidade, valor_final FROM itens_pedido WHERE idPedido = $numpedido");
 
 		if(count($sel)>0){
-			$somaquantidade = array_sum($sel["quantidade"]);
-			$somavalor = array_sum($sel["valor_final"]);
+			foreach($sel as $s){
+				$somaquantidade = $somaquantidade + $s["quantidade"];
+				$somavalor = $somavalor + $s["valor_final"];
+			}	
 		}
+
+		$numero = intval(rand(1,pow(10,6)));
 		
-		$res = $db->_exec("UPDATE TABLE pedidos SET quantidade = $somaquantidade, preco = $somavalor, statusped = 2 WHERE idPedido = $numpedido");
+		$sum = 0;
+		$chave = "";
+		$chave1 = "";
+			while($sum <= 11){
+				$chave1 = rand(1000,(pow(10,4))); 
+				$chave .= $chave1;
+			$sum++;
+			}
+		
+		$nfe = $db->_exec("INSERT INTO nf (idPedido,numero,serie,chave,data_hora) VALUES ($numpedido,$numero,1,'$chave',LOCALTIME())");		
+		
+		//echo $nfe;	
+
+		$res = $db->_exec("UPDATE pedidos SET quantidade = $somaquantidade, preco = $somavalor, nf = '$numero', statusped = 2 WHERE idPedido = $numpedido");
 
         echo $res;
 	}
@@ -191,7 +214,8 @@ if(isset($_GET["a"])){
 
         $id = $_POST["id"];
 
-        $res = $db->_exec("DELETE FROM itens_estoque WHERE iditens_estoque = '{$id}'");
+		$del = $db->_exec("DELETE FROM itens_pedido WHERE idPedido = '{$id}'");	
+        $res = $db->_exec("DELETE FROM pedidos WHERE idPedido = '{$id}'");
 		
         echo $res;
 	}
@@ -260,6 +284,7 @@ include("dashboard.php");
 	* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 	var ajax_div = $.ajax(null);
 	const incluiPed = (quantidade,produto,pedido) => {
+		$('#numpedido').val(pedido);
 		if(ajax_div){ ajax_div.abort(); }
 			ajax_div = $.ajax({
 			cache: false,
@@ -271,7 +296,7 @@ include("dashboard.php");
                 pedido: pedido},
 			
 			success: function retorno_ajax(retorno) {
-				$('#numpedido').val(pedido);
+				//$('#numpedido').val(pedido);
 				if(!retorno){
 					alert("ERRO AO INLUIR ITEM NO PEDIDO!");
 				} 
@@ -323,6 +348,7 @@ include("dashboard.php");
 				$('#modal_formul').html('<div class="spinner-grow m-3 text-primary" role="status"><span class="visually-hidden">Aguarde...</span></div>');
 			},
 			success: function retorno_ajax(retorno) {
+				alert(retorno);
 				if(retorno){
                     $('#mod_formul').modal('hide');
                     location.reload();
@@ -409,7 +435,7 @@ include("dashboard.php");
 	* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 	var ajax_div = $.ajax(null);
 	function del_item(id){
-        if( confirm( "Deseja excluir os itens do estoque?")){
+        if( confirm( "Deseja excluir o pedido?")){
             if(ajax_div){ ajax_div.abort(); }
 		        ajax_div = $.ajax({
 		    	cache: false,
@@ -481,7 +507,7 @@ include("dashboard.php");
 										}
 									?>
 								</select>
-								<input id=numpedido hidden></input>
+								<input id="numpedido" hidden></input>
 							</div>
                         </div>
 					</div>

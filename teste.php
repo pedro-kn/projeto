@@ -1,19 +1,17 @@
 
 
-<div class="row mb-3">
-						<div class="col">
-							<label for="descricao" class="form-label">Produto:</label>
-							<select id="descricao" class="form-control form-control-lg" onselect="confereItem();" name="descricao" type="text" >
-                                <option value="" selected></option>
-                                <?php
-                                    $desc = $db->select('SELECT * FROM produtos');
-                                    foreach($desc as $s){
-                                        echo  '<option value="'.$s["idProdutos"].'">'.$s["descricao"].'</option>';
-                                    }
-                                ?>
-				            </select>
-                        </div>
-					</div>
+<?php   
+            $sum = 0;
+            $chave = "";
+            $chave1 = "";
+            while($sum <= 11){
+                $chave1 = rand(1000,(pow(10,4)))." "; 
+                $chave .= $chave1;
+            $sum++;
+            }
+            //$chave = chr($chave);
+    echo $chave;        
+?>
 
 
         
