@@ -8,7 +8,20 @@ $db = new Database();
 * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 if(isset($_GET["a"])){
 
-    
+    function remove_acento($string){
+		$caracteres_sem_acento = array(
+			'Š'=>'S', 'š'=>'s', 'Ð'=>'Dj','Â'=>'Z', 'Â'=>'z', 'À'=>'A', 'Á'=>'A', 'Â'=>'A', 'Ã'=>'A', 'Ä'=>'A',
+			'Å'=>'A', 'Æ'=>'A', 'Ç'=>'C', 'È'=>'E', 'É'=>'E', 'Ê'=>'E', 'Ë'=>'E', 'Ì'=>'I', 'Í'=>'I', 'Î'=>'I',
+			'Ï'=>'I', 'Ñ'=>'N', 'Å'=>'N', 'Ò'=>'O', 'Ó'=>'O', 'Ô'=>'O', 'Õ'=>'O', 'Ö'=>'O', 'Ø'=>'O', 'Ù'=>'U', 'Ú'=>'U',
+			'Û'=>'U', 'Ü'=>'U', 'Ý'=>'Y', 'Þ'=>'B', 'ß'=>'Ss','à'=>'a', 'á'=>'a', 'â'=>'a', 'ã'=>'a', 'ä'=>'a',
+			'å'=>'a', 'æ'=>'a', 'ç'=>'c', 'è'=>'e', 'é'=>'e', 'ê'=>'e', 'ë'=>'e', 'ì'=>'i', 'í'=>'i', 'î'=>'i',
+			'ï'=>'i', 'ð'=>'o', 'ñ'=>'n', 'Å'=>'n', 'ò'=>'o', 'ó'=>'o', 'ô'=>'o', 'õ'=>'o', 'ö'=>'o', 'ø'=>'o', 'ù'=>'u',
+			'ú'=>'u', 'û'=>'u', 'ü'=>'u', 'ý'=>'y', 'ý'=>'y', 'þ'=>'b', 'ÿ'=>'y', 'ƒ'=>'f',
+			'Ä'=>'a', 'î'=>'i', 'â'=>'a', 'È'=>'s', 'È'=>'t', 'Ä'=>'A', 'Î'=>'I', 'Â'=>'A', 'È'=>'S', 'È'=>'T',
+		);
+		$nova_string = strtr($string, $caracteres_sem_acento);
+		return ($nova_string);
+	}
 	
     /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
 	* Buscar conteúdo na div conteudo:
@@ -46,7 +59,7 @@ if(isset($_GET["a"])){
 				echo '</thead>';
 				echo '<tbody>';
                 foreach($res as $r){
-					echo '<tr>';
+					echo '<tr  onclick="get_item_ped('.$r["idPedido"].')" >';
 						echo '<td style="text-align: left">'.$r["idPedido"].'</td>';
 						echo '<td style="text-align: center">'.$r["nomec"].'</td>';
 						echo '<td style="text-align: center">'.$r["nomev"].'</td>';
@@ -103,7 +116,7 @@ if(isset($_GET["a"])){
 				echo '</thead>';
 				echo '<tbody>';
                 foreach($res as $r){
-					echo '<tr>';
+					echo '<tr >';
 						echo '<td  style="text-align: left">'.$r["descricao"].'</td>';
 						echo '<td style="text-align: center">'.$r["Preço"].'</td>';
 						echo '<td style="text-align: center">';
@@ -185,21 +198,17 @@ if(isset($_GET["a"])){
 		$res = $db->_exec("UPDATE pedidos SET quantidade = $somaquantidade, preco = $somavalor, nf = '$numero', statusped = 2 WHERE idPedido = $numpedido");
 		
 		//baixa nos estoques pós emissao da nf
-		$sel1 = $db->select("SELECT idProdutos FROM itens_pedido WHERE idPedido = $numpedido ");
-		$pesq = $db->select("SELECT idProdutos, quantidade FROM itens_estoque");
-			foreach($pesq as $p){
-				if($p["idProdutos"] == $sel1["idProdutos"]){
-					$subtracao = floatval($p["quantidade"]) - floatval($sel1["quantidade"]);
-					$baixa = $db->_exec("UPDATE itens_estoque SET quantidade = $subtracao");
-				}
-				else{
-					
-				}
+		$sel1 = $db->select("SELECT p.idProdutos, e.idProdutos as eidprod, e.quantidade as equant, p.quantidade as pquant FROM itens_pedido p 
+							INNER JOIN itens_estoque e ON e.idProdutos = p.idProdutos
+							WHERE p.idPedido = $numpedido");
+
+			foreach($sel1 as $s){
+
+					$idp = $s["eidprod"];
+					$subtracao = floatval($s["equant"]) - floatval($s["pquant"]);
+					$baixa = $db->_exec("UPDATE itens_estoque SET quantidade = $subtracao WHERE idProdutos = $idp");
 			}
-
-			
-
-        echo $res;
+		echo $res;
 	}
 
 	
@@ -262,6 +271,37 @@ if(isset($_GET["a"])){
         }
 	}
 
+	/* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+	* Busca conteúdo para a exibição dos detalhes do pedido:
+	* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
+	if($_GET["a"] == "get_det_ped"){
+      
+
+        $id = $_POST["id"];
+
+		$res = $db->select("SELECT p.idPedido, p.idCliente, p.idVendedor, c.Nome as nomec, v.Nome as nomev, p.quantidade, p.preco, p.nf, p.statusped
+							FROM pedidos p
+							INNER JOIN cliente c ON c.idCliente = p.idCliente
+							INNER JOIN vendedor v ON v.idVendedor = p.idVendedor
+							INNER JOIN itens_pedido i ON i.idPedido = {$id}
+							WHERE p.idPedido = {$id}");
+		
+        if(count($res) > 0){
+            $res[0]['nomev'] = remove_acento($res[0]['nomev']);
+            $res[0]['nomec'] = remove_acento($res[0]['nomec']);
+			$res[0]['nf'] = remove_acento($res[0]['nf']);
+			$res[0]['statusped'] = remove_acento($res[0]['statusped']);
+			$res[0]['quantidade'] = remove_acento($res[0]['quantidade']);
+			$res[0]['preco'] = remove_acento($res[0]['preco']);
+			
+            $a_retorno["res"] = $res;
+            $c_retorno = json_encode($a_retorno["res"]);
+            print_r($c_retorno);
+			//print_r($a_retorno["res"]);
+
+        }
+	}
+
     die();
 }
 
@@ -274,7 +314,8 @@ include("dashboard.php");
 
 <script type="text/javascript" src="./assets/js/jquery-3.6.1.min.js"></script>
 <script type="text/javascript">
-	
+
+
     /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
 	* Listar itens:
 	* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
@@ -410,6 +451,41 @@ include("dashboard.php");
 					$("#frm_val1_edit").val(obj_ret[0].descricao);
 					$("#frm_val2_edit").val(obj_ret[0].endereco);
 					$("#frm_val3_edit").val(obj_ret[0].quantidade);	
+				}
+			}
+		});
+	}
+
+	  /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+	* Pesquisar itens dos detalhes do pedido:
+	* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
+	var ajax_div = $.ajax(null);
+	const get_item_ped = (id) => {
+        if(ajax_div){ ajax_div.abort(); }
+		ajax_div = $.ajax({
+			cache: false,
+			async: true,
+			url: '?a=get_det_ped',
+			type: 'post',
+			data: { 
+                id: id,
+            },
+			beforeSend: function(){
+                $('#mod_formul_exibe').modal("show");
+			},
+			success: function retorno_ajax(retorno) {
+				//alert(retorno);
+				if(retorno){
+                    $("#frm_id_exibe").val(id);
+                    
+					var obj_ret = JSON.parse(retorno);
+
+					$("#frm_val1_exibe").val(obj_ret[0].nomev);
+					$("#frm_val2_exibe").val(obj_ret[0].nomec);
+					$("#frm_val3_exibe").val(obj_ret[0].nf);
+					$("#frm_val4_exibe").val(obj_ret[0].statusped);	
+					$("#frm_val5_exibe").val(obj_ret[0].quantidade);	
+					$("#frm_val6_exibe").val(obj_ret[0].preco);	
 				}
 			}
 		});
@@ -585,6 +661,97 @@ include("dashboard.php");
 			<div class="modal-footer">
 				<button type="button" class="btn btn-secondary" onclick="$('#mod_formul_edit').modal('hide');">Cancelar</button>
 				<button type="button" class="btn btn-primary" id="frm_OK" onclick="editClient();"><img id="img_btn_ok" style="width: 15px; display: none; margin-right: 10px">OK</button>
+			</div>
+		</div>
+	</div>
+</div>
+
+<!-- Modal formulário Exibição-->
+<div class="modal" id="mod_formul_exibe">
+	<div class="modal-dialog modal-dialog-centered modal-dialog-scrollable modal-xl" style="max-width: 70%;">
+		<div class="modal-content">
+			<div class="modal-header" style="align-items: center">
+				<div style="display: flex; align-items: center">
+					<div style="margin-right: 5px">
+						<h2 style="margin: 0"><span class="badge bg-info text-white" style="padding: 8px" id="span_endereco_nome"></span></h2>
+					</div>
+					<div>
+						<h5 id="tit_frm_formul_edit" class="modal-title">Informações do Pedido X</h5>
+					</div>
+				</div>
+				<button type="button" style="cursor: pointer; border: 1px solid #ccc; border-radius: 10px" aria-label="Fechar" onclick="$('#mod_formul_exibe').modal('hide');">X</button>
+			</div>
+			<div class="modal-body modal-dialog-scrollable">
+				<form id="frm_general_exib" name="frm_general">
+					<div class="row mb-3">
+
+						<div class="col">
+                            <input type="text" style="text-align: left" aria-describedby="frm_id_exibe" class="form-control form-control-lg" name="frm_id_exibe" id="frm_id_exibe" hidden>
+							<label for="frm_val1_exibe" class="form-label">Vendedor:</label>
+							<input type="text" style="text-align: left" aria-describedby="frm_val1_exibe" class="form-control form-control-lg" name="frm_val1_exibe" id="frm_val1_exibe" placeholder="" disabled>
+						</div>
+					
+						<div class="col">
+							<label for="frm_val2_exibe" class="form-label">Cliente:</label>
+							<input type="text" style="text-align: left" aria-describedby="frm_val2_exibe" class="form-control form-control-lg" name="frm_val2_exibe" id="frm_val2_exibe" placeholder="" disabled>
+						</div>
+					
+						<div class="col">
+							<label for="frm_val3_exibe" class="form-label">Nota Fiscal:</label>
+							<input type="text" style="text-align: left" aria-describedby="frm_val3_exibe" class="form-control form-control-lg" name="frm_val3_exibe" id="frm_val3_exibe" placeholder="" disabled>
+						</div>
+
+						<div class="col">
+							<label for="frm_val4_exibe" class="form-label">Status:</label>
+							<input type="text" style="text-align: left" aria-describedby="frm_val4_exibe" class="form-control form-control-lg" name="frm_val4_exibe" id="frm_val4_exibe" placeholder="" disabled>
+						</div>
+					</div>	
+					
+					<div class="row mb-3">
+						<div class="col">			
+							<label for="frm_vallista_exibe" class="form-label">Produtos:</label>
+								
+								<?php
+									echo '<div class="table-responsive">';
+										echo '<table id="tb_lista" class="table table-striped table-hover table-sm" style="font-size: 10pt">';
+											echo '<thead>';
+												echo '<tr>';
+													echo '<th style="text-align: left">Descrição do Produto</th>';
+													echo '<th style="text-align: center">Quantidade</th>';
+													echo '<th style="text-align: center">Valor</th>';
+											echo '</thead>';
+											echo '<tbody>';
+											
+											$lista = $db->select('SELECT idProdutos, quantidade, valor_final FROM itens_pedido');
+											foreach($lista as $s){
+												echo '<tr>';
+													echo '<th style="text-align: left">'.$s["idProdutos"].'</th>';
+													echo '<th style="text-align: center">'.$s["quantidade"].'</th>';
+													echo '<th style="text-align: center">'.$s["valor_final"].'</th>';
+											}
+											echo '</tbody>';
+										echo '</table>';
+									echo '</div>';	
+								?>
+						</div>			
+					</div>
+
+					<div class="row mb-3">					
+						<div class="col">
+							<label for="frm_val5_exibe" class="form-label">Quantidade Total:</label>
+							<input type="text" style="text-align: left" aria-describedby="frm_val5_exibe" class="form-control form-control-lg" name="frm_val5_exibe" id="frm_val5_exibe" placeholder="" disabled>
+						</div>
+
+						<div class="col">
+							<label for="frm_val6_exibe" class="form-label">Valor Final:</label>
+							<input type="text" style="text-align: left" aria-describedby="frm_val6_exibe" class="form-control form-control-lg" name="frm_val6_exibe" id="frm_val6_exibe" placeholder="" disabled>
+						</div>
+					</div>
+				</form>
+			</div>
+			<div class="modal-footer">
+				<button type="button" class="btn btn-secondary" onclick="$('#mod_formul_exibe').modal('hide');">Cancelar</button>
+				<button type="button" class="btn btn-primary" id="frm_OK" onclick="$('#mod_formul_exibe').modal('hide');"><img id="img_btn_ok" style="width: 15px; display: none; margin-right: 10px">OK</button>
 			</div>
 		</div>
 	</div>
