@@ -283,7 +283,6 @@ if(isset($_GET["a"])){
 							FROM pedidos p
 							INNER JOIN cliente c ON c.idCliente = p.idCliente
 							INNER JOIN vendedor v ON v.idVendedor = p.idVendedor
-							INNER JOIN itens_pedido i ON i.idPedido = {$id}
 							WHERE p.idPedido = {$id}");
 		
         if(count($res) > 0){
@@ -294,9 +293,26 @@ if(isset($_GET["a"])){
 			$res[0]['quantidade'] = remove_acento($res[0]['quantidade']);
 			$res[0]['preco'] = remove_acento($res[0]['preco']);
 			
-            $a_retorno["res"] = $res;
-            $c_retorno = json_encode($a_retorno["res"]);
-            print_r($c_retorno);
+			$c_retorno = array();
+			$body = "";
+
+			$lista = $db->select("SELECT p.descricao, i.idProdutos, p.idProdutos, p.Preço as preco, i.quantidade, i.valor_final FROM itens_pedido i
+								INNER JOIN produtos p ON p.idProdutos = i.idProdutos 
+								WHERE i.idPedido = {$id}");
+				foreach($lista as $s){
+					$body .= '<tr>';
+						$body .= '<th style="text-align: left">'.$s["descricao"].'</th>';
+						$body .= '<th style="text-align: center">'.$s["quantidade"].'</th>';
+						$body .= '<th style="text-align: center">'.$s["preco"].'</th>';
+						$body .= '<th style="text-align: center">'.$s["valor_final"].'</th>';
+				}						
+				
+			$c_retorno["header"] = $res;	
+            //$a_retorno["res"] = $res;
+            //$c_retorno["header"] = json_encode($a_retorno["res"]);
+			$c_retorno["body"] = $body;
+			echo json_encode($c_retorno);
+            //print_r(json_encode($c_retorno));
 			//print_r($a_retorno["res"]);
 
         }
@@ -474,11 +490,13 @@ include("dashboard.php");
                 $('#mod_formul_exibe').modal("show");
 			},
 			success: function retorno_ajax(retorno) {
-				//alert(retorno);
-				if(retorno){
+				var obj = JSON.parse(retorno);
+
+				//alert(teste.header);
+				//if(retorno){
                     $("#frm_id_exibe").val(id);
                     
-					var obj_ret = JSON.parse(retorno);
+					var obj_ret = obj.header;
 
 					$("#frm_val1_exibe").val(obj_ret[0].nomev);
 					$("#frm_val2_exibe").val(obj_ret[0].nomec);
@@ -486,7 +504,9 @@ include("dashboard.php");
 					$("#frm_val4_exibe").val(obj_ret[0].statusped);	
 					$("#frm_val5_exibe").val(obj_ret[0].quantidade);	
 					$("#frm_val6_exibe").val(obj_ret[0].preco);	
-				}
+
+					$('#div_exibe_ped').html(obj.body); 
+				//}
 			}
 		});
 	}
@@ -710,29 +730,22 @@ include("dashboard.php");
 					<div class="row mb-3">
 						<div class="col">			
 							<label for="frm_vallista_exibe" class="form-label">Produtos:</label>
-								
-								<?php
-									echo '<div class="table-responsive">';
-										echo '<table id="tb_lista" class="table table-striped table-hover table-sm" style="font-size: 10pt">';
-											echo '<thead>';
-												echo '<tr>';
-													echo '<th style="text-align: left">Descrição do Produto</th>';
-													echo '<th style="text-align: center">Quantidade</th>';
-													echo '<th style="text-align: center">Valor</th>';
-											echo '</thead>';
-											echo '<tbody>';
+								<div class="table-responsive">
+									<table id="tb_lista" class="table table-striped table-hover table-sm" style="font-size: 10pt">
+										<thead>
+											<tr>
+												<th style="text-align: left">Descrição do Produto</th>
+												<th style="text-align: center">Quantidade</th>
+												<th style="text-align: center">Valor Unitário</th>
+												<th style="text-align: center">Valor</th>
+										</thead>
+										<tbody id="div_exibe_ped">
+
 											
-											$lista = $db->select('SELECT idProdutos, quantidade, valor_final FROM itens_pedido');
-											foreach($lista as $s){
-												echo '<tr>';
-													echo '<th style="text-align: left">'.$s["idProdutos"].'</th>';
-													echo '<th style="text-align: center">'.$s["quantidade"].'</th>';
-													echo '<th style="text-align: center">'.$s["valor_final"].'</th>';
-											}
-											echo '</tbody>';
-										echo '</table>';
-									echo '</div>';	
-								?>
+										
+										</tbody>
+									</table>
+								</div>				
 						</div>			
 					</div>
 
