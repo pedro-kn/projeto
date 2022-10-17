@@ -32,14 +32,14 @@ if(isset($_GET["a"])){
         $where = "";
 
         if($pesquisa != ""){
-            $where .= "WHERE idPedido LIKE '%{$pesquisa}%' OR idCliente LIKE '%{$pesquisa}%' OR idVendedor LIKE '%{$pesquisa}%' OR quantidade LIKE '%{$pesquisa}%' OR preco LIKE '%{$pesquisa}%' OR nf LIKE '%{$pesquisa}%' OR status LIKE '%{$pesquisa}%'";
+            $where .= "WHERE idPedido LIKE '%{$pesquisa}%' OR c.Nome LIKE '%{$pesquisa}%' OR v.Nome LIKE '%{$pesquisa}%' OR quantidade LIKE '%{$pesquisa}%' OR preco LIKE '%{$pesquisa}%' OR nf LIKE '%{$pesquisa}%' OR p.statusped LIKE '%{$pesquisa}%'";
         }    
     
 		$res = $db->select("SELECT p.idPedido, c.Nome as nomec, v.Nome as nomev, p.quantidade, p.preco, p.nf, p.statusped
                             FROM pedidos p
                             INNER JOIN cliente c ON c.idCliente = p.idCliente
                             INNER JOIN vendedor v ON v.idVendedor = p.idVendedor
-                            {$where} ORDER BY idPedido");
+                            {$where} ORDER BY p.idPedido");
 		
 		if(count($res) > 0){
 			echo '<div class="table-responsive">';
@@ -301,12 +301,15 @@ if(isset($_GET["a"])){
 								WHERE i.idPedido = {$id}");
 				foreach($lista as $s){
 					$body .= '<tr>';
-						$body .= '<th style="text-align: left">'.$s["descricao"].'</th>';
-						$body .= '<th style="text-align: center">'.$s["quantidade"].'</th>';
-						$body .= '<th style="text-align: center">'.$s["preco"].'</th>';
-						$body .= '<th style="text-align: center">'.$s["valor_final"].'</th>';
+						$body .= '<td style="text-align: left">'.$s["descricao"].'</td>';
+						$body .= '<td style="text-align: center">'.$s["quantidade"].'</td>';
+						$body .= '<td style="text-align: center">'.$s["preco"].'</td>';
+						$body .= '<td style="text-align: center">'.$s["valor_final"].'</td>';
 				}						
-				
+			
+			$title = '<h5 id="div_exibe_title" class="modal-title">Informações do Pedido '.$id.'</h5>';
+			
+			$c_retorno["title"] = $title;	
 			$c_retorno["header"] = $res;	
             //$a_retorno["res"] = $res;
             //$c_retorno["header"] = json_encode($a_retorno["res"]);
@@ -505,6 +508,8 @@ include("dashboard.php");
 					$("#frm_val5_exibe").val(obj_ret[0].quantidade);	
 					$("#frm_val6_exibe").val(obj_ret[0].preco);	
 
+					$('#div_exibe_title').html(obj.title); 
+
 					$('#div_exibe_ped').html(obj.body); 
 				//}
 			}
@@ -696,7 +701,7 @@ include("dashboard.php");
 						<h2 style="margin: 0"><span class="badge bg-info text-white" style="padding: 8px" id="span_endereco_nome"></span></h2>
 					</div>
 					<div>
-						<h5 id="tit_frm_formul_edit" class="modal-title">Informações do Pedido X</h5>
+						<h5 id="div_exibe_title"></h5>
 					</div>
 				</div>
 				<button type="button" style="cursor: pointer; border: 1px solid #ccc; border-radius: 10px" aria-label="Fechar" onclick="$('#mod_formul_exibe').modal('hide');">X</button>
@@ -729,7 +734,7 @@ include("dashboard.php");
 					
 					<div class="row mb-3">
 						<div class="col">			
-							<label for="frm_vallista_exibe" class="form-label">Produtos:</label>
+							<label for="frm_vallista_exibe" class="form-label"><b>Produtos:</b></label>
 								<div class="table-responsive">
 									<table id="tb_lista" class="table table-striped table-hover table-sm" style="font-size: 10pt">
 										<thead>

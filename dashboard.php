@@ -48,13 +48,13 @@
 		</ul>
 		
 		<h6 class="sidebar-heading d-flex justify-content-between align-items-center px-3 mt-4 mb-1 text-muted">
-			<span>Titulo Bacana</span>
+			<span>Relatórios</span>
 		</h6>
 		<ul class="nav flex-column mb-2">	
 			<li class="nav-item">
-				<a class="nav-link" href="pedidos.php">
+				<a class="nav-link" href="relatorios.php">
 				    <span data-feather="fa fa-dashboard"></span>
-				    Pedidos
+				    Relatórios
 				</a>
 			</li>	
 			
