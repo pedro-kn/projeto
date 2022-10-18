@@ -493,8 +493,9 @@ include("dashboard.php");
                 $('#mod_formul_exibe').modal("show");
 			},
 			success: function retorno_ajax(retorno) {
+				alert(retorno);
 				var obj = JSON.parse(retorno);
-
+				
 				//alert(teste.header);
 				//if(retorno){
                     $("#frm_id_exibe").val(id);
