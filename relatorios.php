@@ -24,7 +24,7 @@ if(isset($_GET["a"])){
 	}
 	
     /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
-	* Buscar conteúdo na div conteudo:
+	* Buscar conteúdo de relatorio de vendas na div conteudo:
 	* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 	if($_GET["a"] == "lista_user"){
 		
@@ -63,6 +63,57 @@ if(isset($_GET["a"])){
                         echo '<td style="text-align: center">'.$r["quan_total"].'</td>';
                         echo '<td style="text-align: center">'.$r["preco_total"].'</td>';
                         
+					echo '</tr>';
+				}
+				echo '</tbody>';
+			echo '</table>';
+			echo '</div>';
+		}else{
+			echo '<div class="alert alert-warning" role="alert">';
+				echo 'Nenhum registro localizado!';
+			echo '</div>';
+		}
+	}
+
+ /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+	* Buscar conteúdo de relatorio de estoque na div conteudo:
+	* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
+	if($_GET["a"] == "lista_user_est"){
+		
+		$pesquisa = $_POST['pesq'];
+        $where = "";
+
+        if($pesquisa != ""){
+            $where .= "WHERE p.descricao LIKE '%{$pesquisa}%' OR e.endereco LIKE '%{$pesquisa}%' OR quantidade LIKE '%{$pesquisa}%'";
+        }    
+    
+		$res = $db->select("SELECT p.descricao, e.endereco, i.quantidade, i.iditens_estoque, sum(d.quantidade) as quant_ped 
+                FROM itens_estoque i 
+                left join end_estoque e on e.idend_estoque = i.idend_estoque
+                left join produtos p on p.idProdutos = i.idProdutos
+				inner join itens_pedido s on s.idProdutos = i.idProdutos
+				inner join pedidos d on d.idPedido = s.idPedido
+				{$where} 
+				GROUP BY p.descricao;");
+		
+		if(count($res) > 0){
+			echo '<div class="table-responsive">';
+			echo '<table id="tb_lista" class="table table-striped table-hover table-sm" style="font-size: 10pt">';
+				echo '<thead>';
+					echo '<tr>';
+						echo '<th style="text-align: left">Produto</th>';
+						echo '<th style="text-align: center">Endereço de Estoque</th>';
+						echo '<th style="text-align: center">Quantidade em Estoque</th>';
+                        echo '<th style="text-align: center">Quantidade em Pedidos</th>';
+					echo '</tr>';
+				echo '</thead>';
+				echo '<tbody>';
+                foreach($res as $r){
+					echo '<tr>';
+						echo '<td style="text-align: left">'.$r["descricao"].'</td>';
+						echo '<td style="text-align: center">'.$r["endereco"].'</td>';
+						echo '<td style="text-align: center">'.$r["quantidade"].'</td>';
+						echo '<td style="text-align: center">'.$r["quant_ped"].'</td>';
 					echo '</tr>';
 				}
 				echo '</tbody>';
@@ -240,7 +291,7 @@ include("dashboard.php");
 
 
     /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
-	* Listar itens:
+	* Listar itens de vendas:
 	* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 	var ajax_div = $.ajax(null);
 	const lista_itens = () => {
@@ -249,6 +300,27 @@ include("dashboard.php");
 			cache: false,
 			async: true,
 			url: '?a=lista_user',
+			type: 'post',
+			data: {pesq: $('#input_pesquisa').val() 			},
+			beforeSend: function(){
+				$('#div_conteudo').html('<div class="spinner-grow m-3 text-primary" role="status"><span class="visually-hidden">Aguarde...</span></div>');
+			},
+			success: function retorno_ajax(retorno) {
+				$('#div_conteudo').html(retorno); 
+			}
+		});
+	}
+
+	    /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+	* Listar itens de estoque:
+	* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
+	var ajax_div = $.ajax(null);
+	const lista_itens_est = () => {
+		if(ajax_div){ ajax_div.abort(); }
+			ajax_div = $.ajax({
+			cache: false,
+			async: true,
+			url: '?a=lista_user_est',
 			type: 'post',
 			data: {pesq: $('#input_pesquisa').val() 			},
 			beforeSend: function(){
@@ -403,11 +475,11 @@ include("dashboard.php");
                 $('#mod_exibe_ped').modal("show");
 			},
 			success: function retorno_ajax(retorno) {
-				alert(retorno);
+				
 				var obj = JSON.parse(retorno);
 				var obj_title = obj.title;
 				var obj_body = obj.body;
-				alert(obj);
+				
 				//alert(teste.header);
 				//if(retorno){
                     $("#frm_id_exibe_ped").val(id);
@@ -662,14 +734,19 @@ include("dashboard.php");
 	</div>
 
 	<div class="form-group row">
-		<div class="col-10">
+		<div class="col-8">
 			<div class="input-group">
 			<input type="text" class="form-control" onkeyup="lista_itens()" id="input_pesquisa" placeholder="Pesquisar">
 			</div>
 		</div>
 		<div class="col-2">
 			<div class="input-group">
-				<button type="button" onclick="$('#mod_formul').modal('show');" class="btn btn-primary"><i class="fa fa-plus-circle" style="margin-right: 5px"></i>Incluir</button>
+				<button type="button" onclick="lista_itens()" class="btn btn-primary"><i style="margin-right: 5px"></i>Vendas</button>
+			</div>
+		</div>
+		<div class="col-2">
+			<div class="input-group">
+				<button type="button" onclick="lista_itens_est()" class="btn btn-primary"><i style="margin-right: 5px"></i>Estoque</button>
 			</div>
 		</div>
 	</div>
