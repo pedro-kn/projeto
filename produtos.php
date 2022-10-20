@@ -7,31 +7,31 @@ $db = new Database();
 * Verificação de ações requisitadas via AJAX:
 * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 if(isset($_GET["a"])){
-
+	
     /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
 	* Buscar conteúdo:
 	* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
-	
-
 	if($_GET["a"] == "lista_user"){
 		
-		$pesquisa = $_POST['pesq'];
+        $pesquisa = $_POST['pesq'];
         $where = "";
 
         if($pesquisa != ""){
-            $where .= "WHERE (Nome LIKE '%{$pesquisa}%' OR CPF LIKE '%{$pesquisa}%' OR Comissão LIKE '%{$pesquisa}%')";
+            $where .= "WHERE (EAN LIKE '%{$pesquisa}%' OR Desconto LIKE '%{$pesquisa}%' OR Preço LIKE '%{$pesquisa}%' OR descricao LIKE '%{$pesquisa}%' )";
         }    
     
-		$res = $db->select("SELECT * FROM vendedor {$where}");
+		$res = $db->select("SELECT * FROM produtos {$where}");
 		
 		if(count($res) > 0){
-			echo '<div class="table-responsive">';
+            
+            echo '<div class="table-responsive">';
 			echo '<table id="tb_lista" class="table table-striped table-hover table-sm" style="font-size: 10pt">';
 				echo '<thead>';
 					echo '<tr>';
-						echo '<th style="text-align: left">Nome</th>';
-						echo '<th style="text-align: center">CPF</th>';
-						echo '<th style="text-align: center">Comissão</th>';
+						echo '<th style="text-align: left">EAN</th>';
+						echo '<th style="text-align: center">Desconto</th>';
+						echo '<th style="text-align: center">Preço</th>';
+                        echo '<th style="text-align: center">Descrição</th>';
                         echo '<th style="text-align: center">Editar</th>';
                         echo '<th style="text-align: center">Deletar</th>';
 					echo '</tr>';
@@ -39,14 +39,15 @@ if(isset($_GET["a"])){
 				echo '<tbody>';
                 foreach($res as $r){
 					echo '<tr>';
-						echo '<td style="text-align: left">'.$r["Nome"].'</td>';
-						echo '<td style="text-align: center">'.$r["CPF"].'</td>';
-						echo '<td style="text-align: center">'.$r["Comissão"].'</td>';
+						echo '<td style="text-align: left">'.$r["EAN"].'</td>';
+						echo '<td style="text-align: center">'.$r["Desconto"].'</td>';
+						echo '<td style="text-align: center">'.$r["Preço"].'</td>';
+                        echo '<td style="text-align: center">'.$r["descricao"].'</td>';
                         echo '<td style="text-align: center">';
-							echo '<i title="Editar" onclick="get_item(\''.$r["idVendedor"].'\')" class="fas fa-edit" style="cursor: pointer"></i>';
+							echo '<i title="Editar" onclick="get_item(\''.$r["idProdutos"].'\')" class="fas fa-edit" style="cursor: pointer"></i>';
 						echo '</td>';
                         echo '<td style="text-align: center">';
-							echo '<i title="Deletar" onclick="del_item(\''.$r["idVendedor"].'\')" class="fas fa-trash" style="cursor: pointer"></i>';
+							echo '<i title="Deletar" onclick="del_item(\''.$r["idProdutos"].'\')" class="fas fa-trash" style="cursor: pointer"></i>';
 						echo '</td>';
 					echo '</tr>';
 				}
@@ -64,15 +65,16 @@ if(isset($_GET["a"])){
 	* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 	if($_GET["a"] == "inclui_user"){
       
-        $nome = $_POST["nome"];
-        $cpf = $_POST["cpf"];
-        $comissao = $_POST["comissao"];
+        $ean = $_POST["ean"];
+        $desconto = $_POST["desconto"];
+        $preco = $_POST["preco"];
+        $descricao = $_POST["descricao"];
 		
-		$s = $db->select("SELECT idVendedor FROM vendedor ORDER BY idVendedor DESC LIMIT 1");
+		$s = $db->select("SELECT idProdutos FROM produtos ORDER BY idProdutos DESC LIMIT 1");
 		foreach($s as $s1){
-			$codVendedor=intval($s1["idVendedor"])+1;
+			$codProduto=intval($s1["idProdutos"])+1;
 		}
-		$res = $db->_exec("INSERT INTO vendedor (idVendedor,Nome,CPF,Comissão) VALUES ('$codVendedor','$nome','$cpf','$comissao')");
+		$res = $db->_exec("INSERT INTO produtos (idProdutos,EAN,Desconto,Preço,descricao) VALUES ('$codProduto','$ean','$desconto','$preco','$descricao')");
 
         echo $res;
 	}
@@ -84,13 +86,14 @@ if(isset($_GET["a"])){
         
 
         $id = $_POST["id"];
-        $nome = $_POST["nome"];
-        $cpf = $_POST["cpf"];
-        $comissao = $_POST["comissao"];
+        $ean = $_POST["ean"];
+        $desconto = $_POST["desconto"];
+        $preco = $_POST["preco"];
+        $descricao = $_POST["descricao"];
 
-        $res = $db->_exec("UPDATE vendedor 
-			SET idVendedor = '{$id}', Nome = '{$nome}', CPF = '{$cpf}', Comissão = '{$comissao}'
-			WHERE idVendedor = '{$id}'");
+        $res = $db->_exec("UPDATE produtos 
+			SET idProdutos = '{$id}', EAN = '{$ean}', Desconto = '{$desconto}', Preço = '{$preco}', descricao = '{$descricao}'
+			WHERE idProdutos = '{$id}'");
 
         echo $res;
 	}
@@ -103,7 +106,7 @@ if(isset($_GET["a"])){
 
         $id = $_POST["id"];
 
-        $res = $db->_exec("DELETE FROM vendedor WHERE idVendedor = '{$id}'");
+        $res = $db->_exec("DELETE FROM produtos WHERE idProdutos = '{$id}'");
 		
         echo $res;
 	}
@@ -116,12 +119,13 @@ if(isset($_GET["a"])){
 
         $id = $_POST["id"];
 
-        $res = $db->select("SELECT Nome, CPF, Comissão FROM vendedor WHERE idVendedor = '{$id}'");
+        $res = $db->select("SELECT EAN, Desconto, Preço, descricao FROM produtos WHERE idProdutos = '{$id}'");
 		
         if(count($res) > 0){
-            $res[0]['Nome'] = utf8_encode($res[0]['Nome']);
-            $res[0]['CPF'] = utf8_encode($res[0]['CPF']);
-			$res[0]['Comissão'] = utf8_encode($res[0]['Comissão']);
+            $res[0]['EAN'] = utf8_encode($res[0]['EAN']);
+            $res[0]['Desconto'] = utf8_encode($res[0]['Desconto']);
+			$res[0]['Preço'] = utf8_encode($res[0]['Preço']);
+            $res[0]['descricao'] = utf8_encode($res[0]['descricao']);
 			
             $a_retorno["res"] = $res;
             $c_retorno = json_encode($a_retorno["res"]);
@@ -153,7 +157,7 @@ include("dashboard.php");
 			async: true,
 			url: '?a=lista_user',
 			type: 'post',
-			data: {pesq: $('#input_pesquisa').val()},
+			data: { pesq: $('#input_pesquisa').val()},
 			beforeSend: function(){
 				$('#div_conteudo').html('<div class="spinner-grow m-3 text-primary" role="status"><span class="visually-hidden">Aguarde...</span></div>');
 			},
@@ -175,9 +179,10 @@ include("dashboard.php");
 			url: '?a=inclui_user',
 			type: 'post',
 			data: { 
-                nome: $('#Nome').val(),
-                cpf: $('#CPF').val(),
-                comissao: $('#Comissão').val(),
+                ean: $('#ean').val(),
+                desconto: $('#desconto').val(),
+                preco: $('#preco').val(),
+                descricao: $('#descricao').val(),
             },
 			beforeSend: function(){
 
@@ -186,7 +191,7 @@ include("dashboard.php");
 			success: function retorno_ajax(retorno) {
 				if(retorno){
                     $('#mod_formul').modal('hide');
-					location.reload();
+                    location.reload();
                     lista_itens();  
                 }else{
                     alert("ERRO AO CADASTRAR USUÁRIO! " + retorno);
@@ -218,15 +223,16 @@ include("dashboard.php");
                 $('#mod_formul_edit').modal("show");
 			},
 			success: function retorno_ajax(retorno) {
-				
-				if(retorno){
+				console.log(retorno);
+				if(retorno != ""){
                     $("#frm_id").val(id);
                     
 					var obj_ret = JSON.parse(retorno);
 
-					$("#frm_nome_edit").val(obj_ret[0].Nome);
-					$("#frm_cpf_edit").val(obj_ret[0].CPF);
-					$("#frm_comissao_edit").val(obj_ret[0].Comissão);	
+					$("#frm_ean_edit").val(obj_ret[0].EAN);
+					$("#frm_desconto_edit").val(obj_ret[0].Desconto);
+					$("#frm_preco_edit").val(obj_ret[0].Preço);
+                    $("#frm_descricao_edit").val(obj_ret[0].descricao);		
 				}
 			}
 		});
@@ -245,9 +251,10 @@ include("dashboard.php");
 			type: 'post',
 			data: { 
                 id: $("#frm_id").val(),
-                nome: $("#frm_nome_edit").val(),
-                cpf: $("#frm_cpf_edit").val(),
-                comissao: $("#frm_comissao_edit").val(),
+                ean: $("#frm_ean_edit").val(),
+                desconto: $("#frm_desconto_edit").val(),
+                preco: $("#frm_preco_edit").val(),
+                descricao: $("#frm_descricao_edit").val(),
             },
 			beforeSend: function(){
                 $('#mod_formul_edit').html('<div class="spinner-grow m-3 text-primary" role="status"><span class="visually-hidden">Aguarde...</span></div>');
@@ -304,7 +311,7 @@ include("dashboard.php");
 						<h2 style="margin: 0"><span class="badge bg-info text-white" style="padding: 8px" id="span_endereco_nome"></span></h2>
 					</div>
 					<div>
-						<h5 id="tit_frm_formul" class="modal-title">Incluir Usuário</h5>
+						<h5 id="tit_frm_formul" class="modal-title">Incluir Produtos</h5>
 					</div>
 				</div>
 				<button type="button" style="cursor: pointer; border: 1px solid #ccc; border-radius: 10px" aria-label="Fechar" onclick="$('#mod_formul').modal('hide');">X</button>
@@ -313,22 +320,29 @@ include("dashboard.php");
 				<form id="frm_general" name="frm_general">
 					<div class="row mb-3">
 						<div class="col">
-							<label for="Nome" class="form-label">Nome:</label>
-							<input type="text" style="text-align: left" aria-describedby="Nome" class="form-control form-control-lg" name="Nome" id="Nome" placeholder="">
+							<label for="ean" class="form-label">EAN:</label>
+							<input type="number" style="text-align: left" aria-describedby="ean" class="form-control form-control-lg" name="ean" id="ean" placeholder="">
 						</div>
 					</div>
 
 					<div class="row mb-3">
 						<div class="col">
-							<label for="CPF" class="form-label">CPF:</label>
-							<input type="number" style="text-align: left" aria-describedby="CPF" class="form-control form-control-lg" name="CPF" id="CPF" placeholder="">
+							<label for="desconto" class="form-label">Desconto:</label>
+							<input type="number" style="text-align: left" aria-describedby="desconto" class="form-control form-control-lg" name="desconto" id="desconto" placeholder="">
+						</div>
+					</div>
+
+                    <div class="row mb-3">
+						<div class="col">
+							<label for="preco" class="form-label">Preço:</label>
+							<input type="number" style="text-align: left" aria-describedby="preco" class="form-control form-control-lg" name="preco" id="preco" placeholder="">
 						</div>
 					</div>
 
 					<div class="input-group">
 						<div class="col">
-							<label for="Comissão" class="form-label">Comissão:</label>
-							<input type="number" style="text-align: left" aria-describedby="basic-addon2" class="form-control form-control-lg" name="Comissão" id="Comissão" placeholder="">
+							<label for="descricao" class="form-label">Descrição:</label>
+							<input type="text" style="text-align: left" aria-describedby="descricao" class="form-control form-control-lg" name="descricao" id="descricao" placeholder="">
 								
 						</div>
 					</div>
@@ -352,7 +366,7 @@ include("dashboard.php");
 						<h2 style="margin: 0"><span class="badge bg-info text-white" style="padding: 8px" id="span_endereco_nome"></span></h2>
 					</div>
 					<div>
-						<h5 id="tit_frm_formul_edit" class="modal-title">Editar Usuário</h5>
+						<h5 id="tit_frm_formul_edit" class="modal-title">Editar Produto</h5>
 					</div>
 				</div>
 				<button type="button" style="cursor: pointer; border: 1px solid #ccc; border-radius: 10px" aria-label="Fechar" onclick="$('#mod_formul_edit').modal('hide');">X</button>
@@ -362,22 +376,29 @@ include("dashboard.php");
 					<div class="row mb-3">
 						<div class="col">
                             <input type="text" style="text-align: left" aria-describedby="frm_id" class="form-control form-control-lg" name="frm_id" id="frm_id" hidden>
-							<label for="frm_nome_edit" class="form-label">Nome:</label>
-							<input type="text" style="text-align: left" aria-describedby="frm_nome_edit" class="form-control form-control-lg" name="frm_nome_edit" id="frm_nome_edit" placeholder="">
+							<label for="frm_ean_edit" class="form-label">EAN:</label>
+							<input type="text" style="text-align: left" aria-describedby="frm_ean_edit" class="form-control form-control-lg" name="frm_ean_edit" id="frm_ean_edit" placeholder="">
 						</div>
 					</div>
 
 					<div class="row mb-3">
 						<div class="col">
-							<label for="frm_cpf_edit" class="form-label">CPF:</label>
-							<input type="text" style="text-align: left" aria-describedby="frm_cpf_edit" class="form-control form-control-lg" name="frm_cpf_edit" id="frm_cpf_edit" placeholder="">
+							<label for="frm_desconto_edit" class="form-label">Desconto:</label>
+							<input type="text" style="text-align: left" aria-describedby="frm_desconto_edit" class="form-control form-control-lg" name="frm_desconto_edit" id="frm_desconto_edit" placeholder="">
 						</div>
 					</div>
 
 					<div class="row mb-3">
 						<div class="col">
-							<label for="frm_comissao_edit" class="form-label">Comissão:</label>
-							<input type="text" style="text-align: left" aria-describedby="frm_comissao_edit" class="form-control form-control-lg" name="frm_comissao_edit" id="frm_comissao_edit" placeholder="">
+							<label for="frm_preco_edit" class="form-label">Preço:</label>
+							<input type="text" style="text-align: left" aria-describedby="frm_preco_edit" class="form-control form-control-lg" name="frm_preco_edit" id="frm_preco_edit" placeholder="">
+						</div>
+					</div>
+
+                    <div class="row mb-3">
+						<div class="col">
+							<label for="frm_descricao_edit" class="form-label">Descrição:</label>
+							<input type="text" style="text-align: left" aria-describedby="frm_descricao_edit" class="form-control form-control-lg" name="frm_descricao_edit" id="frm_descricao_edit" placeholder="">
 						</div>
 					</div>
 				</form>
@@ -408,7 +429,7 @@ include("dashboard.php");
 	<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
 		<div style="display: flex; flex: 1">
 			<div style="flex: 1">
-				<h1 class="h2">Usuários</h1>
+				<h1 class="h2">Produtos</h1>
 			</div>
 		</div>
 	</div>

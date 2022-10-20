@@ -8,30 +8,35 @@ $db = new Database();
 * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 if(isset($_GET["a"])){
 
+    
+	
     /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
 	* Buscar conteúdo:
 	* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
-	
-
 	if($_GET["a"] == "lista_user"){
 		
 		$pesquisa = $_POST['pesq'];
         $where = "";
 
         if($pesquisa != ""){
-            $where .= "WHERE (Nome LIKE '%{$pesquisa}%' OR CPF LIKE '%{$pesquisa}%' OR Comissão LIKE '%{$pesquisa}%')";
+            $where .= "WHERE p.descricao LIKE '%{$pesquisa}%' OR e.endereco LIKE '%{$pesquisa}%' OR quantidade LIKE '%{$pesquisa}%'";
         }    
     
-		$res = $db->select("SELECT * FROM vendedor {$where}");
+		$res = $db->select("SELECT p.descricao, e.endereco, quantidade, iditens_estoque
+                FROM itens_estoque i 
+                left join end_estoque e on e.idend_estoque = i.idend_estoque
+                left join produtos p on p.idProdutos = i.idProdutos
+				{$where}
+				ORDER BY p.descricao ;");
 		
 		if(count($res) > 0){
 			echo '<div class="table-responsive">';
 			echo '<table id="tb_lista" class="table table-striped table-hover table-sm" style="font-size: 10pt">';
 				echo '<thead>';
 					echo '<tr>';
-						echo '<th style="text-align: left">Nome</th>';
-						echo '<th style="text-align: center">CPF</th>';
-						echo '<th style="text-align: center">Comissão</th>';
+						echo '<th style="text-align: left">Produto</th>';
+						echo '<th style="text-align: center">Endereço de Estoque</th>';
+						echo '<th style="text-align: center">Quantidade</th>';
                         echo '<th style="text-align: center">Editar</th>';
                         echo '<th style="text-align: center">Deletar</th>';
 					echo '</tr>';
@@ -39,14 +44,14 @@ if(isset($_GET["a"])){
 				echo '<tbody>';
                 foreach($res as $r){
 					echo '<tr>';
-						echo '<td style="text-align: left">'.$r["Nome"].'</td>';
-						echo '<td style="text-align: center">'.$r["CPF"].'</td>';
-						echo '<td style="text-align: center">'.$r["Comissão"].'</td>';
+						echo '<td style="text-align: left">'.$r["descricao"].'</td>';
+						echo '<td style="text-align: center">'.$r["endereco"].'</td>';
+						echo '<td style="text-align: center">'.$r["quantidade"].'</td>';
                         echo '<td style="text-align: center">';
-							echo '<i title="Editar" onclick="get_item(\''.$r["idVendedor"].'\')" class="fas fa-edit" style="cursor: pointer"></i>';
+							echo '<i title="Editar" onclick="get_item(\''.$r["iditens_estoque"].'\')" class="fas fa-edit" style="cursor: pointer"></i>';
 						echo '</td>';
                         echo '<td style="text-align: center">';
-							echo '<i title="Deletar" onclick="del_item(\''.$r["idVendedor"].'\')" class="fas fa-trash" style="cursor: pointer"></i>';
+							echo '<i title="Deletar" onclick="del_item(\''.$r["iditens_estoque"].'\')" class="fas fa-trash" style="cursor: pointer"></i>';
 						echo '</td>';
 					echo '</tr>';
 				}
@@ -62,35 +67,51 @@ if(isset($_GET["a"])){
     /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
 	* Inserir conteúdo:
 	* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
-	if($_GET["a"] == "inclui_user"){
+	if($_GET["a"] == "inclui_client"){
       
-        $nome = $_POST["nome"];
-        $cpf = $_POST["cpf"];
-        $comissao = $_POST["comissao"];
-		
-		$s = $db->select("SELECT idVendedor FROM vendedor ORDER BY idVendedor DESC LIMIT 1");
-		foreach($s as $s1){
-			$codVendedor=intval($s1["idVendedor"])+1;
-		}
-		$res = $db->_exec("INSERT INTO vendedor (idVendedor,Nome,CPF,Comissão) VALUES ('$codVendedor','$nome','$cpf','$comissao')");
+        $descricao = $_POST["descricao"];
+        $endereco = $_POST["endereco"];
+        $quantidade = $_POST["quantidade"];
+	
+		$res = $db->_exec("INSERT INTO itens_estoque (iditens_estoque,idProdutos,idend_estoque,quantidade) VALUES ('','$descricao','$endereco','$quantidade')");
 
         echo $res;
+	}
+
+	 /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+	* Conferir se item já está incluso no estoque:
+	* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
+	
+	if($_GET["a"] == "confere_item"){
+		
+		$descricao = $_POST["descricao"]; //obtem o valor idProdutos, e nao o valor descrição
+
+		$res = $db->select("SELECT * FROM itens_estoque");
+		$check=false;
+			foreach($res as $r){
+				if($r["idProdutos"]==$descricao){
+				$check=true;
+				}
+			}
+			
+		echo $check;	
 	}
 
     /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
 	* Edita conteúdo:
 	* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
-	if($_GET["a"] == "edit_user"){
+	if($_GET["a"] == "edit_client"){
         
 
         $id = $_POST["id"];
-        $nome = $_POST["nome"];
-        $cpf = $_POST["cpf"];
-        $comissao = $_POST["comissao"];
+        $descricao = $_POST["descricao"];
+        $endereco = $_POST["endereco"];
+        $quantidade = $_POST["quantidade"];
+        
 
-        $res = $db->_exec("UPDATE vendedor 
-			SET idVendedor = '{$id}', Nome = '{$nome}', CPF = '{$cpf}', Comissão = '{$comissao}'
-			WHERE idVendedor = '{$id}'");
+        $res = $db->_exec("UPDATE itens_estoque 
+			SET iditens_estoque = {$id},  quantidade = '{$quantidade}'
+			WHERE iditens_estoque = {$id}");
 
         echo $res;
 	}
@@ -103,25 +124,42 @@ if(isset($_GET["a"])){
 
         $id = $_POST["id"];
 
-        $res = $db->_exec("DELETE FROM vendedor WHERE idVendedor = '{$id}'");
+		$est = $db->select("SELECT idProdutos FROM itens_estoque WHERE iditens_estoque = '{$id}'");
 		
-        echo $res;
+		$ped = $db->select("SELECT idProdutos FROM itens_pedido");
+		
+		$check = false;
+		// corrigir essa logica eventualmente
+		foreach($ped as $p){
+			if($p["idProdutos"] == $est){
+				$check = true;
+			}
+			else{
+				//$res = $db->_exec("DELETE FROM itens_estoque WHERE iditens_estoque = '{$id}'");
+			}
+		}
+		echo $check;
+        //echo $res;
 	}
 
     /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
 	* Busca conteúdo:
 	* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
-	if($_GET["a"] == "get_user"){
+	if($_GET["a"] == "get_client"){
       
 
         $id = $_POST["id"];
 
-        $res = $db->select("SELECT Nome, CPF, Comissão FROM vendedor WHERE idVendedor = '{$id}'");
+        $res = $db->select("SELECT iditens_estoque, p.descricao, e.endereco, quantidade
+			FROM itens_estoque i 
+			inner join end_estoque e on e.idend_estoque = i.idend_estoque
+			inner join produtos p on p.idProdutos = i.idProdutos
+			WHERE iditens_estoque = {$id}");
 		
         if(count($res) > 0){
-            $res[0]['Nome'] = utf8_encode($res[0]['Nome']);
-            $res[0]['CPF'] = utf8_encode($res[0]['CPF']);
-			$res[0]['Comissão'] = utf8_encode($res[0]['Comissão']);
+            $res[0]['descricao'] = utf8_encode($res[0]['descricao']);
+            $res[0]['endereco'] = utf8_encode($res[0]['endereco']);
+			$res[0]['quantidade'] = utf8_encode($res[0]['quantidade']);
 			
             $a_retorno["res"] = $res;
             $c_retorno = json_encode($a_retorno["res"]);
@@ -153,7 +191,7 @@ include("dashboard.php");
 			async: true,
 			url: '?a=lista_user',
 			type: 'post',
-			data: {pesq: $('#input_pesquisa').val()},
+			data: {pesq: $('#input_pesquisa').val() 			},
 			beforeSend: function(){
 				$('#div_conteudo').html('<div class="spinner-grow m-3 text-primary" role="status"><span class="visually-hidden">Aguarde...</span></div>');
 			},
@@ -167,26 +205,27 @@ include("dashboard.php");
 	* Incluir itens:
 	* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 	var ajax_div = $.ajax(null);
-	const incluiUser = () => {
+	const incluiClient = () => {
         if(ajax_div){ ajax_div.abort(); }
 		ajax_div = $.ajax({
 			cache: false,
 			async: true,
-			url: '?a=inclui_user',
+			url: '?a=inclui_client',
 			type: 'post',
 			data: { 
-                nome: $('#Nome').val(),
-                cpf: $('#CPF').val(),
-                comissao: $('#Comissão').val(),
+                descricao: $('#descricao').val(),
+                endereco: $('#endereco').val(),    
+                quantidade: $('#quantidade').val(),
+                
             },
 			beforeSend: function(){
 
-				$('#mod_formul').html('<div class="spinner-grow m-3 text-primary" role="status"><span class="visually-hidden">Aguarde...</span></div>');
+				$('#modal_formul').html('<div class="spinner-grow m-3 text-primary" role="status"><span class="visually-hidden">Aguarde...</span></div>');
 			},
 			success: function retorno_ajax(retorno) {
 				if(retorno){
                     $('#mod_formul').modal('hide');
-					location.reload();
+                    location.reload();
                     lista_itens();  
                 }else{
                     alert("ERRO AO CADASTRAR USUÁRIO! " + retorno);
@@ -200,6 +239,37 @@ include("dashboard.php");
 		lista_itens();
 	});
 
+	  /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+	* Conferir itens:
+	* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
+	
+	var ajax_div = $.ajax(null);
+	const confereItem = () => {
+		//if( confirm( "Esse item já está Deseja ...... os itens do estoque?")){
+			if(ajax_div){ ajax_div.abort(); }
+				ajax_div = $.ajax({
+				cache: false,
+				async: true,
+				url: '?a=confere_item',
+				type: 'post',
+				data: {descricao: $('#descricao').val() ,},
+				beforeSend: function(){
+					$('#modal_formul').html('<div class="spinner-grow m-3 text-primary" role="status"><span class="visually-hidden">Aguarde...</span></div>');},
+				success: function retorno_ajax(retorno) {
+					if(retorno){
+							alert("Esse item já se encontra no estoque!");
+							lista_itens();	 
+					}else{
+						//alert("ERRO AO CONFERIR ITEM! " + retorno);
+					}
+
+				}
+			});
+		//}else{
+          //  lista_itens();
+        //}
+	}
+
     /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
 	* Pesquisar itens:
 	* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
@@ -209,7 +279,7 @@ include("dashboard.php");
 		ajax_div = $.ajax({
 			cache: false,
 			async: true,
-			url: '?a=get_user',
+			url: '?a=get_client',
 			type: 'post',
 			data: { 
                 id: id,
@@ -224,9 +294,9 @@ include("dashboard.php");
                     
 					var obj_ret = JSON.parse(retorno);
 
-					$("#frm_nome_edit").val(obj_ret[0].Nome);
-					$("#frm_cpf_edit").val(obj_ret[0].CPF);
-					$("#frm_comissao_edit").val(obj_ret[0].Comissão);	
+					$("#frm_val1_edit").val(obj_ret[0].descricao);
+					$("#frm_val2_edit").val(obj_ret[0].endereco);
+					$("#frm_val3_edit").val(obj_ret[0].quantidade);	
 				}
 			}
 		});
@@ -236,18 +306,18 @@ include("dashboard.php");
 	* Editar itens:
 	* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 	var ajax_div = $.ajax(null);
-	const editUser = () => {
+	const editClient = () => {
         if(ajax_div){ ajax_div.abort(); }
 		ajax_div = $.ajax({
 			cache: false,
 			async: true,
-			url: '?a=edit_user',
+			url: '?a=edit_client',
 			type: 'post',
 			data: { 
                 id: $("#frm_id").val(),
-                nome: $("#frm_nome_edit").val(),
-                cpf: $("#frm_cpf_edit").val(),
-                comissao: $("#frm_comissao_edit").val(),
+                descricao: $("#frm_val1_edit").val(),
+				endereco: $("#frm_val2_edit").val(),
+                quantidade: $("#frm_val3_edit").val(),
             },
 			beforeSend: function(){
                 $('#mod_formul_edit').html('<div class="spinner-grow m-3 text-primary" role="status"><span class="visually-hidden">Aguarde...</span></div>');
@@ -269,7 +339,7 @@ include("dashboard.php");
 	* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 	var ajax_div = $.ajax(null);
 	function del_item(id){
-        if( confirm( "Deseja excluir o usuário?")){
+        if( confirm( "Deseja excluir os itens do estoque?")){
             if(ajax_div){ ajax_div.abort(); }
 		        ajax_div = $.ajax({
 		    	cache: false,
@@ -281,10 +351,11 @@ include("dashboard.php");
                 },
 		    	success: function retorno_ajax(retorno) {
                     if(retorno){
+						alert("Deletados " + retorno);
 						location.reload();
                     	lista_itens();  
                 	}else{
-                    	alert("ERRO AO DELETAR USUÁRIO! " + retorno);
+                    	alert("ERRO AO DELETAR ITENS! " + retorno);
                 	}
 		    	}
 		    });
@@ -294,7 +365,7 @@ include("dashboard.php");
 	}
 </script>
 
-<!-- Modal formulário -->
+<!-- Modal formulário Inclusao -->
 <div class="modal" id="mod_formul">
 	<div class="modal-dialog modal-dialog-centered modal-dialog-scrollable modal-xl" style="max-width: 70%;">
 		<div class="modal-content">
@@ -304,31 +375,52 @@ include("dashboard.php");
 						<h2 style="margin: 0"><span class="badge bg-info text-white" style="padding: 8px" id="span_endereco_nome"></span></h2>
 					</div>
 					<div>
-						<h5 id="tit_frm_formul" class="modal-title">Incluir Usuário</h5>
+						<h5 id="tit_frm_formul" class="modal-title">Incluir Itens no Estoque</h5>
 					</div>
 				</div>
 				<button type="button" style="cursor: pointer; border: 1px solid #ccc; border-radius: 10px" aria-label="Fechar" onclick="$('#mod_formul').modal('hide');">X</button>
 			</div>
 			<div class="modal-body modal-dialog-scrollable">
 				<form id="frm_general" name="frm_general">
-					<div class="row mb-3">
+					
+                    <div class="row mb-3">
 						<div class="col">
-							<label for="Nome" class="form-label">Nome:</label>
-							<input type="text" style="text-align: left" aria-describedby="Nome" class="form-control form-control-lg" name="Nome" id="Nome" placeholder="">
-						</div>
+							<label for="descricao" class="form-label">Produto:</label>
+							<select id="descricao" class="form-control form-control-lg" onchange="confereItem();" name="descricao" type="text" >
+                                <option value="" selected></option>
+                                <?php
+                                    $desc = $db->select('SELECT * FROM produtos');
+                                    foreach($desc as $s){
+                                        echo  '<option value="'.$s["idProdutos"].'">'.$s["descricao"].'</option>';
+                                    }
+                                ?>
+				            </select>
+                        </div>
 					</div>
 
-					<div class="row mb-3">
+                    <div class="row mb-3">
 						<div class="col">
-							<label for="CPF" class="form-label">CPF:</label>
-							<input type="number" style="text-align: left" aria-describedby="CPF" class="form-control form-control-lg" name="CPF" id="CPF" placeholder="">
-						</div>
+							<label for="endereco" class="form-label">Endereço de Estoque:</label>
+							<select id="endereco" class="form-control form-control-lg" name="endereco" type="text" >
+                                
+                                <option value="" selected></option>
+                                <?php
+                                    $est = $db->select('SELECT * FROM end_estoque');
+                                    foreach($est as $s){
+                                        echo  '<option value="'.$s["idend_estoque"].'">'.$s["endereco"].'</option>';
+                                    }
+                                ?>
+                            
+				            </select>
+                        </div>
 					</div>
+
+					
 
 					<div class="input-group">
 						<div class="col">
-							<label for="Comissão" class="form-label">Comissão:</label>
-							<input type="number" style="text-align: left" aria-describedby="basic-addon2" class="form-control form-control-lg" name="Comissão" id="Comissão" placeholder="">
+							<label for="quantidade" class="form-label">Quantidade:</label>
+							<input type="number" style="text-align: left" aria-describedby="basic-addon2" class="form-control form-control-lg" name="quantidade" id="quantidade" placeholder="">
 								
 						</div>
 					</div>
@@ -336,13 +428,32 @@ include("dashboard.php");
 			</div>
 			<div class="modal-footer">
 				<button type="button" class="btn btn-secondary" onclick="$('#mod_formul').modal('hide');">Cancelar</button>
-				<button type="button" class="btn btn-primary" id="OK" onclick="incluiUser();"><img id="img_btn_ok" style="width: 15px; display: none; margin-right: 10px">OK</button>
+				<button type="button" class="btn btn-primary" id="OK" onclick="incluiClient();"><img id="img_btn_ok" style="width: 15px; display: none; margin-right: 10px">OK</button>
 			</div>
 		</div>
 	</div>
 </div>
 
-<!-- Modal formulário -->
+<!-- Modal formulário Conferir Itens inclusao-->
+
+<div class="modal" id="mod_formul_conferir">
+	<div class="modal-dialog modal-dialog-centered modal-dialog-scrollable modal-xl" style="max-width: 70%;">
+		<div class="modal-content">
+			<div class="modal-header" style="align-items: center">
+				<div style="display: flex; align-items: center">
+					<div style="margin-right: 5px">
+						<h2 style="margin: 0"><span class="badge bg-info text-white" style="padding: 8px" id="span_endereco_nome"></span></h2>
+					</div>
+					<div>
+						<h5 id="tit_frm_formul_edit" class="modal-title">Alerta!</h5>
+					</div>
+				</div>
+			</div>		
+		</div>
+	</div>
+</div>
+
+<!-- Modal formulário Edição-->
 <div class="modal" id="mod_formul_edit">
 	<div class="modal-dialog modal-dialog-centered modal-dialog-scrollable modal-xl" style="max-width: 70%;">
 		<div class="modal-content">
@@ -352,7 +463,7 @@ include("dashboard.php");
 						<h2 style="margin: 0"><span class="badge bg-info text-white" style="padding: 8px" id="span_endereco_nome"></span></h2>
 					</div>
 					<div>
-						<h5 id="tit_frm_formul_edit" class="modal-title">Editar Usuário</h5>
+						<h5 id="tit_frm_formul_edit" class="modal-title">Editar Itens do Estoque</h5>
 					</div>
 				</div>
 				<button type="button" style="cursor: pointer; border: 1px solid #ccc; border-radius: 10px" aria-label="Fechar" onclick="$('#mod_formul_edit').modal('hide');">X</button>
@@ -362,29 +473,29 @@ include("dashboard.php");
 					<div class="row mb-3">
 						<div class="col">
                             <input type="text" style="text-align: left" aria-describedby="frm_id" class="form-control form-control-lg" name="frm_id" id="frm_id" hidden>
-							<label for="frm_nome_edit" class="form-label">Nome:</label>
-							<input type="text" style="text-align: left" aria-describedby="frm_nome_edit" class="form-control form-control-lg" name="frm_nome_edit" id="frm_nome_edit" placeholder="">
+							<label for="frm_val1_edit" class="form-label">Descrição:</label>
+							<input type="text" style="text-align: left" aria-describedby="frm_val1_edit" class="form-control form-control-lg" name="frm_val1_edit" id="frm_val1_edit" placeholder="" disabled>
 						</div>
 					</div>
 
 					<div class="row mb-3">
 						<div class="col">
-							<label for="frm_cpf_edit" class="form-label">CPF:</label>
-							<input type="text" style="text-align: left" aria-describedby="frm_cpf_edit" class="form-control form-control-lg" name="frm_cpf_edit" id="frm_cpf_edit" placeholder="">
+							<label for="frm_val2_edit" class="form-label">Endereço:</label>
+							<input type="text" style="text-align: left" aria-describedby="frm_val2_edit" class="form-control form-control-lg" name="frm_val2_edit" id="frm_val2_edit" placeholder="" disabled>
 						</div>
 					</div>
 
 					<div class="row mb-3">
 						<div class="col">
-							<label for="frm_comissao_edit" class="form-label">Comissão:</label>
-							<input type="text" style="text-align: left" aria-describedby="frm_comissao_edit" class="form-control form-control-lg" name="frm_comissao_edit" id="frm_comissao_edit" placeholder="">
+							<label for="frm_val3_edit" class="form-label">Quantidade:</label>
+							<input type="text" style="text-align: left" aria-describedby="frm_val3_edit" class="form-control form-control-lg" name="frm_val3_edit" id="frm_val3_edit" placeholder="">
 						</div>
 					</div>
 				</form>
 			</div>
 			<div class="modal-footer">
 				<button type="button" class="btn btn-secondary" onclick="$('#mod_formul_edit').modal('hide');">Cancelar</button>
-				<button type="button" class="btn btn-primary" id="frm_OK" onclick="editUser();"><img id="img_btn_ok" style="width: 15px; display: none; margin-right: 10px">OK</button>
+				<button type="button" class="btn btn-primary" id="frm_OK" onclick="editClient();"><img id="img_btn_ok" style="width: 15px; display: none; margin-right: 10px">OK</button>
 			</div>
 		</div>
 	</div>
@@ -408,7 +519,7 @@ include("dashboard.php");
 	<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
 		<div style="display: flex; flex: 1">
 			<div style="flex: 1">
-				<h1 class="h2">Usuários</h1>
+				<h1 class="h2">Itens do Estoque</h1>
 			</div>
 		</div>
 	</div>

@@ -8,7 +8,7 @@ class Database extends PDO
 
     public $host = "127.0.0.1";
     public $port = 3306;
-    public $schema = "db_projeto";
+    public $schema = "bancoteste1";
     public $username = "root";
     public $password = "";
 
@@ -18,7 +18,7 @@ class Database extends PDO
 
         $this->host = "127.0.0.1";
         $this->port = 3306;
-        $this->schema = "db_balanca_rodoviaria";
+        $this->schema = "bancoteste1";
         $this->username = "root";
         $this->password = "";
 
@@ -34,7 +34,7 @@ class Database extends PDO
         $stmt = $this->prepare($query);
         $stmt->execute();
         $stmt->closeCursor();
-
+        
         return true;
     }
 
